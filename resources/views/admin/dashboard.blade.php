@@ -68,6 +68,7 @@
                     <tr class="text-gray-400 border-b border-neutral-800">
                         <th class="text-left py-3">Product</th>
                         <th class="text-right">Price</th>
+                        <th class="text-right">Quantity</th>
                         <th class="text-right">Added</th>
                     </tr>
                 </thead>
@@ -76,6 +77,7 @@
                     <tr class="border-b border-neutral-800">
                         <td class="py-3">{{ $product->name }}</td>
                         <td class="text-right">{{ number_format($product->price, 2) }} DA</td>
+                        <td class="text-right">{{ $product->usesDynamicStock() ? $product->total_stock : ($product->stock_type === 'size-based' ? ($product->taille_S + $product->taille_M + $product->taille_L + $product->taille_XL + $product->taille_XXL) : $product->total_quantity) }}</td>
                         <td class="text-right">{{ $product->created_at->diffForHumans() }}</td>
                     </tr>
                     @endforeach

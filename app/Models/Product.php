@@ -12,40 +12,112 @@ class Product extends Model
     protected $fillable = [
         'name',
         'description',
+        'category_id',
+        'stock_type_id',
         'price',
-        'quantity',
+        'image',
+        // Keep old fields for backward compatibility during migration
+        'stock_type',
+        'total_quantity',
         'taille_S',
         'taille_M',
         'taille_L',
         'taille_XL',
         'taille_XXL',
-        'image',
-        'category_id'
     ];
 
-    public static function boot()
+    // Relationship with Category
+    public function category()
     {
-        parent::boot();
-
-        static::saving(function ($product) {
-            $product->quantity = $product->taille_S + $product->taille_M + $product->taille_L + $product->taille_XL + $product->taille_XXL;
-        });
-    } 
-// check if specfic size is available
-    public function hasSizeAvailable($size, $quantity = 1)
-    {
-        $sizeField = 'taille_' . strtoupper($size);
-        if ($this->hasSizeAvailable($sizeField, $quantity)) {
-            $this->$sizeField -= $quantity;
-            $this->quantity -= $quantity;
-            $this->save();
-            return true;
-        }
-        return false;
+        return $this->belongsTo(Category::class);
     }
 
-    public function Category()
+    // Relationship with Stock Type
+    public function stockType()
     {
-        return $this->belongsTo(category::class);
+        return $this->belongsTo(StockType::class);
+    }
+
+    // Relationship with Product Stock
+    public function stock()
+    {
+        return $this->hasMany(ProductStock::class);
+    }
+
+    // Get stock for a specific option
+// Get stock for a specific option
+public function getStockForOption($optionId)
+{
+    return $this->stock()
+        ->where('stock_type_option_id', $optionId)
+        ->value('quantity') ?? 0;
+}
+
+    // Get total available stock (dynamic system)
+    public function getTotalStockAttribute()
+    {
+        // If using new dynamic system
+        if ($this->stock_type_id) {
+            return $this->stock()->sum('quantity');
+        }
+
+        // Fallback to old system
+        if ($this->stock_type === 'total') {
+            return $this->total_quantity ?? 0;
+        }
+
+        // For old size-based products
+        return ($this->taille_S ?? 0) + ($this->taille_M ?? 0) + 
+               ($this->taille_L ?? 0) + ($this->taille_XL ?? 0) + 
+               ($this->taille_XXL ?? 0);
+    }
+
+    // Check if product is in stock
+    public function isInStock()
+    {
+        return $this->total_stock > 0;
+    }
+
+    // Check if product uses dynamic stock system
+    public function usesDynamicStock()
+    {
+        return $this->stock_type_id !== null;
+    }
+    public function hasSizes()
+{
+    // New dynamic system
+    if ($this->usesDynamicStock() && $this->stock()->count() > 0) {
+        return true;
+    }
+
+    // Old static size system
+    return
+        ($this->taille_S ?? 0) > 0 ||
+        ($this->taille_M ?? 0) > 0 ||
+        ($this->taille_L ?? 0) > 0 ||
+        ($this->taille_XL ?? 0) > 0 ||
+        ($this->taille_XXL ?? 0) > 0;
+}
+
+
+    // Get available stock options with quantities
+    public function getAvailableStockOptions()
+    {
+        if (!$this->stock_type_id) {
+            return collect();
+        }
+
+        return $this->stock()
+            ->with('stockTypeOption')
+            ->get()
+            ->map(function ($stock) {
+                return [
+                    'id' => $stock->stock_type_option_id,
+                    'label' => $stock->stockTypeOption->label,
+                    'value' => $stock->stockTypeOption->value,
+                    'quantity' => $stock->quantity,
+                    'in_stock' => $stock->quantity > 0,
+                ];
+            });
     }
 }

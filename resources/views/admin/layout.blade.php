@@ -41,7 +41,9 @@
                 <a href="{{ route('admin.dashboard') }}" class="{{ request()->is('admin') ? 'active' : '' }}">Dashboard</a>
                 <a href="{{ route('admin.products.index') }}" class="{{ request()->is('admin/products*') ? 'active' : '' }}">Products</a>
                 <a href="{{ route('admin.categories.index') }}" class="{{ request()->is('admin/categories*') ? 'active' : '' }}">Categories</a>
+                <a href="{{ route('admin.stock-types.index') }}" class="{{ request()->is('admin/stock-types*') ? 'active' : '' }}">Stock Types</a>
                 <a href="{{ route('admin.orders.index') }}" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">Orders</a>
+                <a href="{{ route('admin.discounts.index') }}" class="{{ request()->is('admin/discounts*') ? 'active' : '' }}">Discounts</a>
             </nav>
         </aside>
 

@@ -17,7 +17,7 @@
 </div>
 
 <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" 
-      class="space-y-6 bg-neutral-900/60 p-6 rounded-xl border border-neutral-800 shadow-lg max-w-2xl">
+      class="space-y-6 bg-neutral-900/60 p-6 rounded-xl border border-neutral-800 shadow-lg max-w-3xl">
     @csrf
 
     <!-- Name -->
@@ -49,6 +49,28 @@
         @enderror
     </div>
 
+    <!-- Category -->
+    <div>
+        <label class="block text-gray-400 mb-2 flex items-center gap-2">
+            <x-heroicon-o-tag class="w-5 h-5 text-yellow-400" />
+            Category
+        </label>
+        <select name="category_id"
+                class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
+                       focus:outline-none focus:border-yellow-400 transition" required>
+            <option value="" disabled selected>Select a category</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->id }}" 
+                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                    {{ $category->name }}
+                </option>
+            @endforeach
+        </select>
+        @error('category_id') 
+            <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
+        @enderror
+    </div>  
+
     <!-- Price -->
     <div>
         <label class="block text-gray-400 mb-2 flex items-center gap-2">
@@ -64,92 +86,38 @@
         @enderror
     </div>
 
-    <!-- Size Inventory Section -->
+    <!-- Stock Type Selection -->
     <div class="border-t border-neutral-700 pt-6">
-        <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <x-heroicon-o-cube class="w-6 h-6 text-yellow-400" />
-            Size Inventory
-        </h3>
-        
-        <div class="grid grid-cols-5 gap-4">
-            <!-- Size S -->
-            <div>
-                <label class="block text-gray-400 mb-2 text-center font-medium">
-                    Size S
-                </label>
-                <input type="number" name="taille_S" 
-                       value="{{ old('taille_S', 0) }}"
-                       min="0"
-                       class="size-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 text-center
-                              focus:outline-none focus:border-yellow-400 transition" required>
-                @error('taille_S') 
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p> 
-                @enderror
-            </div>
+        <div class="mb-6">
+            <label class="block text-gray-400 mb-2 flex items-center gap-2">
+                <x-heroicon-o-cube class="w-5 h-5 text-yellow-400" />
+                Stock Type
+            </label>
+            <select name="stock_type_id" id="stock_type_select"
+                    class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
+                           focus:outline-none focus:border-yellow-400 transition" required>
+                <option value="" disabled selected>Select stock type</option>
+                @foreach($stockTypes as $stockType)
+                    <option value="{{ $stockType->id }}" 
+                            data-display-type="{{ $stockType->display_type }}"
+                            {{ old('stock_type_id') == $stockType->id ? 'selected' : '' }}>
+                        {{ $stockType->name }}
+                    </option>
+                @endforeach
+            </select>
+            @error('stock_type_id') 
+                <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
+            @enderror
+        </div>
 
-            <!-- Size M -->
-            <div>
-                <label class="block text-gray-400 mb-2 text-center font-medium">
-                    Size M
-                </label>
-                <input type="number" name="taille_M" 
-                       value="{{ old('taille_M', 0) }}"
-                       min="0"
-                       class="size-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 text-center
-                              focus:outline-none focus:border-yellow-400 transition" required>
-                @error('taille_M') 
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p> 
-                @enderror
-            </div>
-
-            <!-- Size L -->
-            <div>
-                <label class="block text-gray-400 mb-2 text-center font-medium">
-                    Size L
-                </label>
-                <input type="number" name="taille_L" 
-                       value="{{ old('taille_L', 0) }}"
-                       min="0"
-                       class="size-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 text-center
-                              focus:outline-none focus:border-yellow-400 transition" required>
-                @error('taille_L') 
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p> 
-                @enderror
-            </div>
-
-            <!-- Size XL -->
-            <div>
-                <label class="block text-gray-400 mb-2 text-center font-medium">
-                    Size XL
-                </label>
-                <input type="number" name="taille_XL" 
-                       value="{{ old('taille_XL', 0) }}"
-                       min="0"
-                       class="size-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 text-center
-                              focus:outline-none focus:border-yellow-400 transition" required>
-                @error('taille_XL') 
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p> 
-                @enderror
-            </div>
-
-            <!-- Size XXL -->
-            <div>
-                <label class="block text-gray-400 mb-2 text-center font-medium">
-                    Size XXL
-                </label>
-                <input type="number" name="taille_XXL" 
-                       value="{{ old('taille_XXL', 0) }}"
-                       min="0"
-                       class="size-input w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 text-center
-                              focus:outline-none focus:border-yellow-400 transition" required>
-                @error('taille_XXL') 
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p> 
-                @enderror
-            </div>
+        <!-- Dynamic Stock Options Container -->
+        <div id="stock-options-container" class="hidden">
+            <h3 class="text-lg font-semibold text-white mb-4">Set Stock Quantities</h3>
+            <div id="stock-options-grid" class="grid gap-4"></div>
         </div>
 
         <!-- Total Stock Display -->
-        <div class="mt-4 p-4 bg-neutral-950 rounded-lg border border-yellow-400/30">
+        <div id="total-stock-display" class="hidden mt-4 p-4 bg-neutral-950 rounded-lg border border-yellow-400/30">
             <div class="flex justify-between items-center">
                 <span class="text-gray-400 font-medium">Total Stock:</span>
                 <span id="total-stock" class="text-2xl font-bold text-yellow-400">0</span>
@@ -172,10 +140,6 @@
             <img id="imagePreview" src="#" alt="Image preview" 
                  class="hidden w-32 h-32 object-cover rounded-lg border border-neutral-700">
         </div>
-
-        @error('image') 
-            <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
-        @enderror
     </div>
 
     <!-- Submit -->
@@ -189,50 +153,128 @@
     </div>
 </form>
 
-<!-- Scripts -->
-<script>
-// Image preview
-function previewImage(event) {
-    const reader = new FileReader();
-    reader.onload = function(){
-        const output = document.getElementById('imagePreview');
-        output.src = reader.result;
-        output.classList.remove('hidden');
-    };
-    reader.readAsDataURL(event.target.files[0]);
-}
+@php
+$stockTypesJson = $stockTypes->map(function($type) {
+    return [
+        'id' => $type->id,
+        'name' => $type->name,
+        'display_type' => $type->display_type,
+        'options' => $type->activeOptions->map(function($opt) {
+            return [
+                'id' => $opt->id,
+                'label' => $opt->label,
+                'value' => $opt->value
+            ];
+        })->values()
+    ];
+})->values();
+@endphp
 
-// Calculate total stock
-document.addEventListener('DOMContentLoaded', function() {
-    const sizeInputs = document.querySelectorAll('.size-input');
-    const totalStock = document.getElementById('total-stock');
+<script>
+// Stock type data from backend
+const stockTypesData = @json($stockTypesJson);
+
+const stockTypeSelect = document.getElementById('stock_type_select'); // Changed from 'stock_type_id'
+const stockOptionsContainer = document.getElementById('stock-options-container');
+const stockOptionsGrid = document.getElementById('stock-options-grid');
+const totalStockDisplay = document.getElementById('total-stock-display');
+const totalStockElement = document.getElementById('total-stock');
+
+// Calculate and update total stock
+function updateTotalStock() {
+    const stockInputs = document.querySelectorAll('input[name^="stock["]');
+    let total = 0;
     
-    function updateTotal() {
-        let total = 0;
-        sizeInputs.forEach(input => {
-            total += parseInt(input.value) || 0;
-        });
-        totalStock.textContent = total;
-        
-        // Change color based on stock
-        if (total === 0) {
-            totalStock.classList.remove('text-yellow-400', 'text-green-400');
-            totalStock.classList.add('text-red-400');
-        } else if (total < 20) {
-            totalStock.classList.remove('text-red-400', 'text-green-400');
-            totalStock.classList.add('text-yellow-400');
-        } else {
-            totalStock.classList.remove('text-red-400', 'text-yellow-400');
-            totalStock.classList.add('text-green-400');
-        }
-    }
-    
-    sizeInputs.forEach(input => {
-        input.addEventListener('input', updateTotal);
+    stockInputs.forEach(input => {
+        total += parseInt(input.value) || 0;
     });
     
-    // Initial calculation
-    updateTotal();
+    if (totalStockElement) {
+        totalStockElement.textContent = total;
+    }
+}
+
+// Handle stock type change
+stockTypeSelect?.addEventListener('change', function() {
+    const selectedTypeId = parseInt(this.value);
+    const selectedType = stockTypesData.find(t => t.id === selectedTypeId);
+    
+    if (!selectedType || !selectedType.options || selectedType.options.length === 0) {
+        stockOptionsContainer.classList.add('hidden');
+        totalStockDisplay.classList.add('hidden');
+        stockOptionsGrid.innerHTML = '';
+        return;
+    }
+    
+    // Show containers
+    stockOptionsContainer.classList.remove('hidden');
+    totalStockDisplay.classList.remove('hidden');
+    
+    // Generate stock input fields based on display type
+    let html = '';
+    
+    if (selectedType.display_type === 'none') {
+        // One size fits all
+        const option = selectedType.options[0];
+        html = `
+            <div class="bg-neutral-950 border border-neutral-700 rounded-lg p-4">
+                <label class="block text-gray-400 mb-2">Quantity</label>
+                <input type="number" 
+                       name="stock[${option.id}]" 
+                       min="0" 
+                       value="0"
+                       class="w-full bg-neutral-900 border border-neutral-600 rounded-lg p-3 text-gray-200 
+                              focus:outline-none focus:border-yellow-400 transition"
+                       oninput="updateTotalStock()"
+                       required>
+            </div>
+        `;
+    } else {
+        // Multiple options (grid, dropdown, color-swatch)
+        const gridClass = selectedType.options.length > 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1';
+        html = `<div class="grid ${gridClass} gap-4">`;
+        
+        selectedType.options.forEach(option => {
+            html += `
+                <div class="bg-neutral-950 border border-neutral-700 rounded-lg p-4">
+                    <label class="block text-gray-400 mb-2 font-medium">${option.label}</label>
+                    <input type="number" 
+                           name="stock[${option.id}]" 
+                           min="0" 
+                           value="0"
+                           class="w-full bg-neutral-900 border border-neutral-600 rounded-lg p-3 text-gray-200 
+                                  focus:outline-none focus:border-yellow-400 transition"
+                           oninput="updateTotalStock()"
+                           required>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+    }
+    
+    stockOptionsGrid.innerHTML = html;
+    updateTotalStock();
 });
+
+// Image preview function
+function previewImage(event) {
+    const preview = document.getElementById('imagePreview');
+    const file = event.target.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Trigger change event on page load if a stock type is pre-selected
+if (stockTypeSelect?.value) {
+    stockTypeSelect.dispatchEvent(new Event('change'));
+}
 </script>
 @endsection

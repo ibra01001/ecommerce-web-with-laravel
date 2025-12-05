@@ -4,7 +4,6 @@
 
 @section('content')
 
-
 @if ($errors->any())
     <div class="fixed top-4 right-4 z-50 bg-red-500 text-white p-6 rounded-lg shadow-lg max-w-md">
         <h3 class="font-bold mb-2">⚠️ ERRORS FOUND:</h3>
@@ -27,6 +26,7 @@
         {{ session('success') }}
     </div>
 @endif
+
 <section class="pt-32 pb-24 px-6 bg-gradient-to-b from-black via-neutral-950 to-neutral-900 min-h-screen">
     <div class="max-w-5xl mx-auto">
         
@@ -98,14 +98,16 @@
                     </h2>
 
                     <div class="space-y-4">
+                        <!-- Wilaya Select -->
                         <div>
                             <label class="block text-gray-400 text-sm mb-2">Wilaya *</label>
                             <select id="wilaya-select" name="wilaya" required
                                 class="w-full p-3 bg-neutral-950 border border-neutral-700 rounded-lg text-gray-200 focus:outline-none focus:border-yellow-400 transition">
-                                <option value="" data-cost="0">Select Wilaya</option>
+                                <option value="" data-cost="0" data-wilaya-id="">Select Wilaya</option>
                                 @foreach($wilayas as $wilaya)
                                     <option value="{{ $wilaya->name }}" 
                                             data-cost="{{ $wilaya->shipping_cost }}"
+                                            data-wilaya-id="{{ $wilaya->id }}"
                                             {{ old('wilaya') == $wilaya->name ? 'selected' : '' }}>
                                         {{ $wilaya->name }} — {{ number_format($wilaya->shipping_cost, 0) }} DA
                                     </option>
@@ -116,11 +118,21 @@
                             @enderror
                         </div>
 
+                        <!-- Commune Select -->
                         <div>
                             <label class="block text-gray-400 text-sm mb-2">Commune *</label>
-                            <input type="text" name="commune" value="{{ old('commune') }}" required
-                                placeholder="Enter your commune"
-                                class="w-full p-3 bg-neutral-950 border border-neutral-700 rounded-lg text-gray-200 focus:outline-none focus:border-yellow-400 transition" />
+                            <select id="commune-select" name="commune" required
+                                class="w-full p-3 bg-neutral-950 border border-neutral-700 rounded-lg text-gray-200 focus:outline-none focus:border-yellow-400 transition">
+                                <option value="">Select a wilaya first</option>
+                                @foreach($communes as $commune)
+                                    <option value="{{ $commune->name }}" 
+                                            data-wilaya-id="{{ $commune->wilaya_id }}"
+                                            style="display: none;"
+                                            {{ old('commune') == $commune->name ? 'selected' : '' }}>
+                                        {{ $commune->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('commune') 
                                 <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
                             @enderror
@@ -175,14 +187,16 @@
                         <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
                             @foreach($cart as $cartKey => $item)
                                 @php 
-                                    $lineTotal = $item['price'] * $item['quantity'];
+                                    $itemPrice = isset($item['price']) ? floatval($item['price']) : 0;
+                                    $itemQuantity = isset($item['quantity']) ? intval($item['quantity']) : 0;
+                                    $lineTotal = $itemPrice * $itemQuantity;
                                     $subtotal += $lineTotal;
                                 @endphp
                                 <div class="flex gap-3 pb-4 border-b border-neutral-700">
                                     <div class="w-16 h-16 flex-shrink-0">
-                                        @if($item['image'])
+                                        @if(!empty($item['image']))
                                             <img src="{{ asset('storage/' . $item['image']) }}" 
-                                                 alt="{{ $item['name'] }}"
+                                                 alt="{{ $item['name'] ?? 'Product' }}"
                                                  class="w-full h-full object-cover rounded border border-neutral-700">
                                         @else
                                             <div class="w-full h-full bg-neutral-800 rounded flex items-center justify-center">
@@ -191,11 +205,15 @@
                                         @endif
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <h4 class="text-white text-sm font-medium truncate">{{ $item['name'] }}</h4>
-                                        <p class="text-gray-400 text-xs mt-1">
-                                            Size: <span class="text-yellow-400">{{ $item['taille_type'] }}</span>
-                                        </p>
-                                        <p class="text-gray-400 text-xs">Qty: {{ $item['quantity'] }}</p>
+                                        <h4 class="text-white text-sm font-medium truncate">
+                                            {{ $item['name'] ?? 'Product' }}
+                                        </h4>
+                                        @if(!empty($item['stock_label']))
+                                            <p class="text-gray-400 text-xs mt-1">
+                                                Size: <span class="text-yellow-400">{{ $item['stock_label'] }}</span>
+                                            </p>
+                                        @endif
+                                        <p class="text-gray-400 text-xs">Qty: {{ $itemQuantity }}</p>
                                         <p class="text-yellow-400 text-sm font-semibold mt-1">
                                             {{ number_format($lineTotal, 0) }} DA
                                         </p>
@@ -205,6 +223,13 @@
                         </div>
 
                         <!-- Price Summary -->
+                        @php
+                            $discountAmount = session('discount.amount', 0);
+                            $shippingCost = isset($shipping_cost) ? floatval($shipping_cost) : 0;
+                            $totalBeforeShipping = $subtotal - $discountAmount;
+                            $finalTotal = $totalBeforeShipping + $shippingCost;
+                        @endphp
+
                         <div class="space-y-3 mb-6">
                             <div class="flex justify-between text-gray-400">
                                 <span>Subtotal</span>
@@ -212,16 +237,25 @@
                                     {{ number_format($subtotal, 0) }} DA
                                 </span>
                             </div>
+
+                            @if($discountAmount > 0)
+                                <div class="flex justify-between text-green-400">
+                                    <span>Discount</span>
+                                    <span>-{{ number_format($discountAmount, 0) }} DA</span>
+                                </div>
+                            @endif
+
                             <div class="flex justify-between text-gray-400">
                                 <span>Shipping</span>
                                 <span id="shipping-value">
-                                    {{ $shipping_cost > 0 ? number_format($shipping_cost, 0) . ' DA' : 'Select wilaya' }}
+                                    {{ $shippingCost > 0 ? number_format($shippingCost, 0) . ' DA' : 'Select wilaya' }}
                                 </span>
                             </div>
+
                             <div class="border-t border-neutral-700 pt-3 flex justify-between text-white text-lg font-semibold">
                                 <span>Total</span>
-                                <span id="total-value" class="text-yellow-400">
-                                    {{ number_format($subtotal + $shipping_cost, 0) }} DA
+                                <span id="total-value" class="text-yellow-400" data-discount="{{ $discountAmount }}">
+                                    {{ number_format($finalTotal, 0) }} DA
                                 </span>
                             </div>
                         </div>
@@ -244,26 +278,75 @@
 </section>
 
 <script>
-document.getElementById('wilaya-select').addEventListener('change', function() {
-    const shippingCost = parseFloat(this.options[this.selectedIndex].dataset.cost) || 0;
-    const subtotal = parseFloat(document.getElementById('subtotal-value').dataset.subtotal) || 0;
-    const total = subtotal + shippingCost;
-    
-    // Update shipping display
-    document.getElementById('shipping-value').textContent = shippingCost > 0 
-        ? shippingCost.toLocaleString() + ' DA' 
-        : 'Free';
-    
-    // Update total
-    document.getElementById('total-value').textContent = total.toLocaleString() + ' DA';
-});
-
-// Trigger on page load if wilaya is pre-selected (from old input)
-window.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     const wilayaSelect = document.getElementById('wilaya-select');
+    const communeSelect = document.getElementById('commune-select');
+    const allCommuneOptions = Array.from(communeSelect.querySelectorAll('option[data-wilaya-id]'));
+    
+    // Function to filter communes based on selected wilaya
+    function filterCommunes() {
+        const selectedOption = wilayaSelect.options[wilayaSelect.selectedIndex];
+        const selectedWilayaId = selectedOption.getAttribute('data-wilaya-id');
+        
+        // Hide all commune options first
+        allCommuneOptions.forEach(option => {
+            option.style.display = 'none';
+            option.disabled = true;
+        });
+        
+        // Reset commune selection
+        const currentValue = communeSelect.value;
+        communeSelect.value = '';
+        
+        if (selectedWilayaId) {
+            // Show only communes for selected wilaya
+            let hasVisibleOptions = false;
+            allCommuneOptions.forEach(option => {
+                if (option.getAttribute('data-wilaya-id') === selectedWilayaId) {
+                    option.style.display = 'block';
+                    option.disabled = false;
+                    hasVisibleOptions = true;
+                    
+                    // Restore previous selection if it matches
+                    if (option.value === currentValue) {
+                        communeSelect.value = currentValue;
+                    }
+                }
+            });
+            
+            communeSelect.options[0].textContent = hasVisibleOptions ? 'Select Commune' : 'No communes available';
+        } else {
+            communeSelect.options[0].textContent = 'Select a wilaya first';
+        }
+        
+        // Update shipping cost
+        updateShippingCost();
+    }
+    
+    // Function to update shipping cost and total
+    function updateShippingCost() {
+        const shippingCost = parseFloat(wilayaSelect.options[wilayaSelect.selectedIndex].dataset.cost) || 0;
+        const subtotal = parseFloat(document.getElementById('subtotal-value').dataset.subtotal) || 0;
+        const discountAmount = parseFloat(document.getElementById('total-value').dataset.discount) || 0;
+        const total = subtotal - discountAmount + shippingCost;
+        
+        // Update shipping display
+        document.getElementById('shipping-value').textContent = shippingCost > 0 
+            ? shippingCost.toLocaleString() + ' DA' 
+            : 'Free';
+        
+        // Update total
+        document.getElementById('total-value').textContent = total.toLocaleString() + ' DA';
+    }
+    
+    // Event listener for wilaya change
+    wilayaSelect.addEventListener('change', filterCommunes);
+    
+    // Trigger on page load if wilaya is pre-selected (from old input)
     if (wilayaSelect.value) {
-        wilayaSelect.dispatchEvent(new Event('change'));
+        filterCommunes();
     }
 });
 </script>
+
 @endsection

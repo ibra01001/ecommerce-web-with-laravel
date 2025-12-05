@@ -54,39 +54,81 @@
                     </div>
                 </div>
 
-                <!-- Size Selection -->
-                <div>
-                    <label class="block text-white text-sm font-medium mb-4 tracking-wide uppercase">
-                        Select Size
-                    </label>
-                    <div class="flex flex-wrap gap-3">
-                        @php
-                            $sizes = [
-                                'S' => $product->taille_S,
-                                'M' => $product->taille_M,
-                                'L' => $product->taille_L,
-                                'XL' => $product->taille_XL,
-                                'XXL' => $product->taille_XXL
-                            ];
-                        @endphp
+                @if($product->usesDynamicStock())
+                    @php
+                        $stockOptions = $product->getAvailableStockOptions();
+                        $displayType = $product->stockType->display_type;
+                    @endphp
 
-                        @foreach($sizes as $size => $stock)
-                            <button type="button"
-                                    data-size="{{ $size }}"
-                                    data-stock="{{ $stock }}"
-                                    class="size-btn px-6 py-3 rounded-lg border {{ $stock > 0 ? 'border-neutral-700 text-gray-300 hover:bg-yellow-400 hover:text-black hover:border-yellow-400' : 'border-neutral-800 text-gray-600 cursor-not-allowed' }} font-medium transition-all duration-300 min-w-[60px] relative"
-                                    {{ $stock == 0 ? 'disabled' : '' }}>
-                                {{ $size }}
-                                @if($stock == 0)
-                                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                                @endif
-                            </button>
-                        @endforeach
+                    @if($displayType !== 'none')
+                    <!-- Dynamic Stock Options Selection -->
+                    <div>
+                        <label class="block text-white text-sm font-medium mb-4 tracking-wide uppercase">
+                            Select {{ $product->stockType->name }}
+                        </label>
+
+                        @if($displayType === 'grid')
+                            <!-- Grid Display (for sizes) -->
+                            <div class="flex flex-wrap gap-3">
+                                @foreach($stockOptions as $option)
+                                    <button type="button"
+                                            data-option-id="{{ $option['id'] }}"
+                                            data-stock="{{ $option['quantity'] }}"
+                                            data-label="{{ $option['label'] }}"
+                                            class="stock-option-btn px-6 py-3 rounded-lg border {{ $option['in_stock'] ? 'border-neutral-700 text-gray-300 hover:bg-yellow-400 hover:text-black hover:border-yellow-400' : 'border-neutral-800 text-gray-600 cursor-not-allowed' }} font-medium transition-all duration-300 min-w-[60px] relative"
+                                            {{ !$option['in_stock'] ? 'disabled' : '' }}>
+                                        {{ $option['label'] }}
+                                        @if(!$option['in_stock'])
+                                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+
+                        @elseif($displayType === 'dropdown')
+                            <!-- Dropdown Display -->
+                            <select id="stock-option-select"
+                                    class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
+                                           focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                <option value="">Select an option</option>
+                                @foreach($stockOptions as $option)
+                                    <option value="{{ $option['id'] }}" 
+                                            data-stock="{{ $option['quantity'] }}"
+                                            data-label="{{ $option['label'] }}"
+                                            {{ !$option['in_stock'] ? 'disabled' : '' }}>
+                                        {{ $option['label'] }} {{ $option['in_stock'] ? "({$option['quantity']} available)" : '(Out of stock)' }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                        @elseif($displayType === 'color-swatch')
+                            <!-- Color Swatch Display -->
+                            <div class="flex flex-wrap gap-3">
+                                @foreach($stockOptions as $option)
+                                    <button type="button"
+                                            data-option-id="{{ $option['id'] }}"
+                                            data-stock="{{ $option['quantity'] }}"
+                                            data-label="{{ $option['label'] }}"
+                                            class="stock-option-btn w-12 h-12 rounded-full border-2 {{ $option['in_stock'] ? 'border-neutral-700 hover:border-yellow-400' : 'border-neutral-800 cursor-not-allowed opacity-50' }} transition-all duration-300 relative"
+                                            style="background-color: {{ $option['value'] ?? '#ccc' }}"
+                                            title="{{ $option['label'] }}"
+                                            {{ !$option['in_stock'] ? 'disabled' : '' }}>
+                                        @if(!$option['in_stock'])
+                                            <span class="absolute inset-0 flex items-center justify-center">
+                                                <span class="w-10 h-0.5 bg-red-500 rotate-45"></span>
+                                            </span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <p id="option-error" class="text-red-400 text-sm mt-2 hidden">
+                            Please select an option
+                        </p>
                     </div>
-                    <p id="size-error" class="text-red-400 text-sm mt-2 hidden">
-                        Please select a size
-                    </p>
-                </div>
+                    @endif
+                @endif
 
                 <!-- Quantity Selection -->
                 <div>
@@ -111,7 +153,11 @@
                         </button>
                     </div>
                     <p id="stock-info" class="text-gray-500 text-sm mt-2">
-                        Please select a size first
+                        @if($product->usesDynamicStock() && $product->stockType->display_type !== 'none')
+                            Please select an option first
+                        @else
+                            {{ $product->total_stock }} items available
+                        @endif
                     </p>
                 </div>
 
@@ -119,12 +165,13 @@
                 <form action="{{ route('cart.add', $product->id) }}" method="POST" id="add-to-cart-form" class="pt-4">
                     @csrf
                     <input type="hidden" name="quantity" id="cart-quantity" value="1">
-                    <input type="hidden" name="taille_type" id="selected-size" value="">
+                    <input type="hidden" name="stock_option_id" id="selected-option-id" value="">
                     
                     <button type="submit"
-                            class="w-full flex items-center justify-center gap-3 bg-yellow-400 text-black font-semibold py-4 px-8 rounded-lg hover:bg-yellow-500 transition-colors duration-300 text-lg group">
+                            {{ $product->total_stock == 0 ? 'disabled' : '' }}
+                            class="w-full flex items-center justify-center gap-3 {{ $product->total_stock > 0 ? 'bg-yellow-400 hover:bg-yellow-500' : 'bg-gray-700 cursor-not-allowed' }} text-black font-semibold py-4 px-8 rounded-lg transition-colors duration-300 text-lg group">
                         <x-heroicon-o-shopping-cart class="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        Add to Cart
+                        {{ $product->total_stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
                     </button>
                 </form>
 
@@ -174,10 +221,21 @@
 </section>
 
 <script>
-let selectedSize = null;
+const usesDynamicStock = {{ $product->usesDynamicStock() ? 'true' : 'false' }};
+const displayType = '{{ $product->usesDynamicStock() ? $product->stockType->display_type : 'none' }}';
+let selectedOptionId = null;
 let selectedStock = 0;
+let selectedLabel = '';
 
-// Quantity decrease function
+// For "One Size" products with dynamic stock
+@if($product->usesDynamicStock() && $product->stockType->display_type === 'none')
+    selectedOptionId = {{ $stockOptions->first()['id'] ?? 'null' }};
+    selectedStock = {{ $stockOptions->first()['quantity'] ?? 0 }};
+    selectedLabel = '{{ $stockOptions->first()['label'] ?? '' }}';
+    document.getElementById('selected-option-id').value = selectedOptionId;
+    document.getElementById('quantity').max = selectedStock;
+@endif
+
 function decreaseQty() {
     const input = document.getElementById('quantity');
     const cartInput = document.getElementById('cart-quantity');
@@ -187,14 +245,13 @@ function decreaseQty() {
     }
 }
 
-// Quantity increase function
 function increaseQty() {
     const input = document.getElementById('quantity');
     const cartInput = document.getElementById('cart-quantity');
     const max = parseInt(input.max);
     
-    if (!selectedSize) {
-        alert('Please select a size first');
+    if (usesDynamicStock && displayType !== 'none' && !selectedOptionId) {
+        alert('Please select an option first');
         return;
     }
     
@@ -204,96 +261,91 @@ function increaseQty() {
     }
 }
 
-// Update cart quantity when input changes manually
 document.getElementById('quantity').addEventListener('change', function() {
     const max = parseInt(this.max);
-    
-    if (parseInt(this.value) > max) {
-        this.value = max;
-    }
-    if (parseInt(this.value) < 1) {
-        this.value = 1;
-    }
-    
+    if (parseInt(this.value) > max) this.value = max;
+    if (parseInt(this.value) < 1) this.value = 1;
     document.getElementById('cart-quantity').value = this.value;
 });
 
-// Size selection functionality
-document.querySelectorAll('.size-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        // Don't allow selection if out of stock
-        if (this.disabled) {
-            return;
-        }
+// Handle option selection (buttons)
+if (displayType === 'grid' || displayType === 'color-swatch') {
+    document.querySelectorAll('.stock-option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.disabled) return;
 
-        // Remove selection from all buttons
-        document.querySelectorAll('.size-btn').forEach(b => {
-            b.classList.remove('bg-yellow-400', 'text-black', 'border-yellow-400');
-            b.classList.add('text-gray-300', 'border-neutral-700');
+            document.querySelectorAll('.stock-option-btn').forEach(b => {
+                b.classList.remove('bg-yellow-400', 'text-black', 'border-yellow-400', 'ring-2', 'ring-yellow-400');
+            });
+            
+            this.classList.add('bg-yellow-400', 'text-black', 'border-yellow-400');
+
+            selectedOptionId = this.dataset.optionId;
+            selectedStock = parseInt(this.dataset.stock);
+            selectedLabel = this.dataset.label;
+
+            document.getElementById('selected-option-id').value = selectedOptionId;
+
+            const quantityInput = document.getElementById('quantity');
+            quantityInput.max = selectedStock;
+            
+            if (parseInt(quantityInput.value) > selectedStock) {
+                quantityInput.value = 1;
+                document.getElementById('cart-quantity').value = 1;
+            }
+
+            const stockInfo = document.getElementById('stock-info');
+            stockInfo.textContent = `${selectedStock} items available (${selectedLabel})`;
+            stockInfo.classList.remove('text-red-400');
+            stockInfo.classList.add('text-gray-500');
+
+            document.getElementById('option-error').classList.add('hidden');
         });
+    });
+}
+
+// Handle dropdown selection
+if (displayType === 'dropdown') {
+    document.getElementById('stock-option-select').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
         
-        // Add selection to clicked button
-        this.classList.remove('text-gray-300', 'border-neutral-700');
-        this.classList.add('bg-yellow-400', 'text-black', 'border-yellow-400');
+        if (!selectedOption.value) return;
 
-        // Get size and stock info
-        selectedSize = this.dataset.size;
-        selectedStock = parseInt(this.dataset.stock);
+        selectedOptionId = selectedOption.value;
+        selectedStock = parseInt(selectedOption.dataset.stock);
+        selectedLabel = selectedOption.dataset.label;
 
-        // Update hidden input
-        document.getElementById('selected-size').value = selectedSize;
+        document.getElementById('selected-option-id').value = selectedOptionId;
 
-        // Update quantity limits
         const quantityInput = document.getElementById('quantity');
         quantityInput.max = selectedStock;
         
-        // Reset quantity to 1 if current value exceeds available stock
         if (parseInt(quantityInput.value) > selectedStock) {
             quantityInput.value = 1;
             document.getElementById('cart-quantity').value = 1;
         }
 
-        // Update stock info text
         const stockInfo = document.getElementById('stock-info');
-        if (selectedStock > 0) {
-            stockInfo.textContent = `${selectedStock} items available in size ${selectedSize}`;
-            stockInfo.classList.remove('text-red-400');
-            stockInfo.classList.add('text-gray-500');
-        } else {
-            stockInfo.textContent = `Size ${selectedSize} is out of stock`;
-            stockInfo.classList.remove('text-gray-500');
-            stockInfo.classList.add('text-red-400');
-        }
+        stockInfo.textContent = `${selectedStock} items available (${selectedLabel})`;
 
-        // Hide size error if shown
-        document.getElementById('size-error').classList.add('hidden');
+        document.getElementById('option-error').classList.add('hidden');
     });
-});
+}
 
 // Form submission validation
 document.getElementById('add-to-cart-form').addEventListener('submit', function(e) {
-    const sizeError = document.getElementById('size-error');
-    
-    if (!selectedSize) {
-        e.preventDefault();
-        sizeError.classList.remove('hidden');
-        
-        // Scroll to size selection
-        const firstSizeBtn = document.querySelector('.size-btn');
-        if (firstSizeBtn) {
-            firstSizeBtn.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
+    if (usesDynamicStock && displayType !== 'none') {
+        if (!selectedOptionId) {
+            e.preventDefault();
+            document.getElementById('option-error').classList.remove('hidden');
+            return false;
         }
-        
-        return false;
-    }
 
-    if (selectedStock === 0) {
-        e.preventDefault();
-        alert('This size is out of stock. Please select another size.');
-        return false;
+        if (selectedStock === 0) {
+            e.preventDefault();
+            alert('This option is out of stock. Please select another option.');
+            return false;
+        }
     }
 });
 </script>

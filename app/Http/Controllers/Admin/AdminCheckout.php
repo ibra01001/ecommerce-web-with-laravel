@@ -50,7 +50,7 @@ class AdminCheckout extends Controller
             'address'    => $data['address'],
             'notes'      => $data['notes'] ?? null,
             'total'      => $total,
-            'status'     => 'pending',
+            'status'     => Order::STATUS_PENDING,
         ]);
 
         foreach ($cart as $productId => $item) {
