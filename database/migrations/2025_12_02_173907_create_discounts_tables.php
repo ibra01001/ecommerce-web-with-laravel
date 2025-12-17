@@ -58,9 +58,9 @@ return new class extends Migration
 
         // Add discount columns to orders table
         Schema::table('orders', function (Blueprint $table) {
-            $table->foreignId('discount_id')->nullable()->after('total')->constrained()->onDelete('set null');
-            $table->string('discount_code')->nullable()->after('discount_id');
-            $table->decimal('discount_amount', 10, 2)->default(0)->after('discount_code');
+            $table->foreignId('discount_id')->nullable()->constrained()->onDelete('set null');
+            $table->string('discount_code')->nullable();
+            $table->decimal('discount_amount', 10, 2)->default(0);
         });
     }
 

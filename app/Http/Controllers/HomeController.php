@@ -9,7 +9,8 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $featuredProducts = Product::take(3)->get();
+        
+        $featuredProducts = Product::orderBy('created_at', 'desc')->take(4)->get();
         $categories = Category::all();
 
         return view('home', compact('featuredProducts', 'categories'));

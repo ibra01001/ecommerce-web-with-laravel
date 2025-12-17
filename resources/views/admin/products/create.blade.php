@@ -1,154 +1,182 @@
 @extends('admin.layout')
 
-@section('title', 'Add Product')
+@section('title', 'Create Product')
 
 @section('content')
+{{-- --- Custom CSS to remove number input spin buttons --- --}}
+<style>
+/* Hides the spin buttons from number inputs across browsers */
+.no-spinners::-webkit-outer-spin-button,
+.no-spinners::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinners[type=number] {
+  -moz-appearance: textfield;
+}
+</style>
+{{-- --------------------------------------------------- --}}
+
 <div class="flex justify-between items-center mb-8">
-    <h2 class="text-3xl font-semibold text-white flex items-center gap-3">
-        <x-heroicon-o-plus-circle class="w-7 h-7 text-yellow-400" />
-        Add New Product
+    <h2 class="text-3xl font-semibold text-slate-900 flex items-center gap-3">
+        <x-heroicon-o-plus class="w-7 h-7 text-slate-900" />
+        Create Product
     </h2>
 
     <a href="{{ route('admin.products.index') }}" 
-       class="flex items-center gap-2 text-gray-400 hover:text-yellow-400 transition">
+       class="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition duration-300 font-medium">
         <x-heroicon-o-arrow-left class="w-5 h-5" />
         Back to Products
     </a>
 </div>
 
-<form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" 
-      class="space-y-6 bg-neutral-900/60 p-6 rounded-xl border border-neutral-800 shadow-lg max-w-3xl">
+@if($errors->any())
+<div class="mb-6 bg-red-50 border-2 border-red-200 text-red-800 px-6 py-4 rounded-xl">
+    <div class="flex items-start gap-3">
+        <x-heroicon-o-exclamation-triangle class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+        <ul class="list-disc list-inside space-y-1">
+            @foreach($errors->all() as $error)
+            <li class="font-medium">{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+</div>
+@endif
+
+<form action="{{ route('admin.products.store') }}" 
+      method="POST" enctype="multipart/form-data"
+      class="space-y-8 bg-white p-8 rounded-2xl border-2 border-slate-200 shadow-sm max-w-5xl">
     @csrf
 
-    <!-- Name -->
+    {{-- Name --}}
     <div>
-        <label class="block text-gray-400 mb-2 flex items-center gap-2">
-            <x-heroicon-o-tag class="w-5 h-5 text-yellow-400" />
-            Name
+        <label class="block text-slate-700 font-medium mb-3 flex items-center gap-2">
+            <x-heroicon-o-tag class="w-5 h-5 text-slate-900" />
+            Name *
         </label>
         <input type="text" name="name" 
                value="{{ old('name') }}"
-               class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
-                      focus:outline-none focus:border-yellow-400 transition" required>
-        @error('name') 
-            <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
-        @enderror
+               class="w-full bg-white border-2 border-slate-200 rounded-full px-4 py-3 text-slate-900 font-light
+                      focus:outline-none focus:border-slate-900 transition-all duration-300" required>
+        @error('name') <p class="text-red-600 text-sm mt-2 font-medium">{{ $message }}</p> @enderror
     </div>
 
-    <!-- Description -->
+    {{-- Description --}}
     <div>
-        <label class="block text-gray-400 mb-2 flex items-center gap-2">
-            <x-heroicon-o-document-text class="w-5 h-5 text-yellow-400" />
+        <label class="block text-slate-700 font-medium mb-3 flex items-center gap-2">
+            <x-heroicon-o-document-text class="w-5 h-5 text-slate-900" />
             Description
         </label>
         <textarea name="description" rows="4"
-                  class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
-                         focus:outline-none focus:border-yellow-400 transition">{{ old('description') }}</textarea>
-        @error('description') 
-            <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
-        @enderror
+                  class="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-slate-900 font-light
+                         focus:outline-none focus:border-slate-900 transition-all duration-300 resize-none">{{ old('description') }}</textarea>
+        @error('description') <p class="text-red-600 text-sm mt-2 font-medium">{{ $message }}</p> @enderror
     </div>
 
-    <!-- Category -->
-    <div>
-        <label class="block text-gray-400 mb-2 flex items-center gap-2">
-            <x-heroicon-o-tag class="w-5 h-5 text-yellow-400" />
-            Category
-        </label>
-        <select name="category_id"
-                class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
-                       focus:outline-none focus:border-yellow-400 transition" required>
-            <option value="" disabled selected>Select a category</option>
-            @foreach($categories as $category)
-                <option value="{{ $category->id }}" 
-                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                    {{ $category->name }}
-                </option>
-            @endforeach
-        </select>
-        @error('category_id') 
-            <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
-        @enderror
-    </div>  
-
-    <!-- Price -->
-    <div>
-        <label class="block text-gray-400 mb-2 flex items-center gap-2">
-            <x-heroicon-o-currency-dollar class="w-5 h-5 text-yellow-400" />
-            Price
-        </label>
-        <input type="number" step="0.01" name="price" 
-               value="{{ old('price') }}"
-               class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
-                      focus:outline-none focus:border-yellow-400 transition" required>
-        @error('price') 
-            <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
-        @enderror
-    </div>
-
-    <!-- Stock Type Selection -->
-    <div class="border-t border-neutral-700 pt-6">
-        <div class="mb-6">
-            <label class="block text-gray-400 mb-2 flex items-center gap-2">
-                <x-heroicon-o-cube class="w-5 h-5 text-yellow-400" />
-                Stock Type
+    <div class="grid md:grid-cols-2 gap-6">
+        {{-- Category --}}
+        <div>
+            <label class="block text-slate-700 font-medium mb-3 flex items-center gap-2">
+                <x-heroicon-o-archive-box class="w-5 h-5 text-slate-900" />
+                Category *
             </label>
-            <select name="stock_type_id" id="stock_type_select"
-                    class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
-                           focus:outline-none focus:border-yellow-400 transition" required>
-                <option value="" disabled selected>Select stock type</option>
-                @foreach($stockTypes as $stockType)
-                    <option value="{{ $stockType->id }}" 
-                            data-display-type="{{ $stockType->display_type }}"
-                            {{ old('stock_type_id') == $stockType->id ? 'selected' : '' }}>
-                        {{ $stockType->name }}
+            <select name="category_id"
+                    class="w-full bg-white border-2 border-slate-200 rounded-full px-4 py-3 text-slate-900 font-light
+                           focus:outline-none focus:border-slate-900 transition-all duration-300 appearance-none pr-8" required>
+                <option value="">Select a category</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                        {{ $category->name }}
                     </option>
                 @endforeach
             </select>
-            @error('stock_type_id') 
-                <p class="text-red-400 text-sm mt-1">{{ $message }}</p> 
-            @enderror
+            @error('category_id') <p class="text-red-600 text-sm mt-2 font-medium">{{ $message }}</p> @enderror
         </div>
 
-        <!-- Dynamic Stock Options Container -->
-        <div id="stock-options-container" class="hidden">
-            <h3 class="text-lg font-semibold text-white mb-4">Set Stock Quantities</h3>
-            <div id="stock-options-grid" class="grid gap-4"></div>
-        </div>
-
-        <!-- Total Stock Display -->
-        <div id="total-stock-display" class="hidden mt-4 p-4 bg-neutral-950 rounded-lg border border-yellow-400/30">
-            <div class="flex justify-between items-center">
-                <span class="text-gray-400 font-medium">Total Stock:</span>
-                <span id="total-stock" class="text-2xl font-bold text-yellow-400">0</span>
-            </div>
+        {{-- Price --}}
+        <div>
+            <label class="block text-slate-700 font-medium mb-3 flex items-center gap-2">
+                <x-heroicon-o-currency-dollar class="w-5 h-5 text-slate-900" />
+                Price * (DA)
+            </label>
+            <input type="number" step="0.01" name="price" 
+                   value="{{ old('price') }}"
+                   class="w-full bg-white border-2 border-slate-200 rounded-full px-4 py-3 text-slate-900 font-light
+                          focus:outline-none focus:border-slate-900 transition-all duration-300 no-spinners" required>
+            @error('price') <p class="text-red-600 text-sm mt-2 font-medium">{{ $message }}</p> @enderror
         </div>
     </div>
 
-    <!-- Image -->
-    <div class="border-t border-neutral-700 pt-6">
-        <label class="block text-gray-400 mb-2 flex items-center gap-2">
-            <x-heroicon-o-photo class="w-5 h-5 text-yellow-400" />
-            Product Image
+    {{-- Stock Type --}}
+    <div class="border-t-2 border-slate-200 pt-8">
+        <label class="block text-slate-700 font-medium mb-3 flex items-center gap-2">
+            <x-heroicon-o-cube class="w-5 h-5 text-slate-900" />
+            Stock Type *
         </label>
-        <input type="file" name="image" accept="image/*" 
-               class="text-gray-300 block w-full file:bg-yellow-400 file:text-black 
-                      file:px-4 file:py-2 file:rounded-lg file:border-0 hover:file:bg-yellow-500 transition"
-               onchange="previewImage(event)">
-        
-        <div class="mt-4">
-            <img id="imagePreview" src="#" alt="Image preview" 
-                 class="hidden w-32 h-32 object-cover rounded-lg border border-neutral-700">
+        <select name="stock_type_id" id="stock_type_select"
+                class="w-full bg-white border-2 border-slate-200 rounded-full px-4 py-3 text-slate-900 font-light
+                       focus:outline-none focus:border-slate-900 transition-all duration-300 appearance-none pr-8" required>
+            <option value="">Select a stock type</option>
+            @foreach($stockTypes as $stockType)
+                <option value="{{ $stockType->id }}"
+                    data-display-type="{{ $stockType->display_type }}"
+                    {{ old('stock_type_id') == $stockType->id ? 'selected' : '' }}>
+                    {{ $stockType->name }}
+                </option>
+            @endforeach
+        </select>
+        @error('stock_type_id') <p class="text-red-600 text-sm mt-2 font-medium">{{ $message }}</p> @enderror
+    </div>
+
+    <div id="stock-options-container" class="hidden">
+        <h3 class="text-xl font-semibold text-slate-900 mb-4">Set Stock Quantities</h3>
+        <div id="stock-options-grid" class="grid gap-4"></div>
+    </div>
+
+    <div id="total-stock-display" class="hidden mt-4 p-4 bg-slate-50 rounded-xl border border-slate-300">
+        <div class="flex justify-between items-center">
+            <span class="text-slate-700 font-medium">Total Stock:</span>
+            <span id="total-stock" class="text-2xl font-bold text-slate-900">0</span>
         </div>
     </div>
 
-    <!-- Submit -->
-    <div class="pt-4">
+    {{-- Product Images --}}
+    <div class="border-t-2 border-slate-200 pt-8">
+        <label class="block text-slate-700 font-medium mb-4 flex items-center gap-2">
+            <x-heroicon-o-photo class="w-5 h-5 text-slate-900" />
+            Product Images *
+        </label>
+        
+        <div id="images-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+        </div>
+
+        <div class="flex items-center gap-4">
+            <label for="add-image-input" class="inline-block cursor-pointer">
+                <div class="bg-slate-900 text-white px-6 py-2.5 rounded-full font-medium hover:bg-slate-800 transition inline-flex items-center gap-2 shadow-md">
+                    <x-heroicon-o-plus class="w-5 h-5" />
+                    Add Image
+                </div>
+            </label>
+            <input type="file" 
+                   id="add-image-input"
+                   accept="image/*"
+                   class="hidden"
+                   onchange="addImage(event)">
+            <p class="text-slate-500 text-sm">Add images one by one (max 2MB each). First image will be primary.</p>
+        </div>
+        
+        <div id="hidden-inputs-container"></div>
+        
+        @error('images.*') <p class="text-red-600 text-sm mt-2 font-medium">{{ $message }}</p> @enderror
+    </div>
+
+    <div class="pt-8 flex gap-4">
         <button type="submit" 
-                class="flex items-center gap-2 bg-yellow-400 text-black px-6 py-2.5 rounded-lg font-semibold 
-                       hover:bg-yellow-500 transition">
+                class="flex items-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-full font-medium text-base
+                       hover:bg-slate-800 transition-all duration-300 shadow-lg">
             <x-heroicon-o-check class="w-5 h-5" />
-            Save Product
+            Create Product
         </button>
     </div>
 </form>
@@ -163,7 +191,8 @@ $stockTypesJson = $stockTypes->map(function($type) {
             return [
                 'id' => $opt->id,
                 'label' => $opt->label,
-                'value' => $opt->value
+                'value' => $opt->value,
+                'stock' => 0
             ];
         })->values()
     ];
@@ -171,109 +200,211 @@ $stockTypesJson = $stockTypes->map(function($type) {
 @endphp
 
 <script>
-// Stock type data from backend
 const stockTypesData = @json($stockTypesJson);
-
-const stockTypeSelect = document.getElementById('stock_type_select'); // Changed from 'stock_type_id'
+const stockTypeSelect = document.getElementById('stock_type_select');
 const stockOptionsContainer = document.getElementById('stock-options-container');
 const stockOptionsGrid = document.getElementById('stock-options-grid');
 const totalStockDisplay = document.getElementById('total-stock-display');
 const totalStockElement = document.getElementById('total-stock');
 
-// Calculate and update total stock
+let imageFiles = [];
+let imageCounter = 0;
+
 function updateTotalStock() {
     const stockInputs = document.querySelectorAll('input[name^="stock["]');
     let total = 0;
-    
-    stockInputs.forEach(input => {
-        total += parseInt(input.value) || 0;
-    });
-    
-    if (totalStockElement) {
-        totalStockElement.textContent = total;
-    }
+    stockInputs.forEach(input => total += parseInt(input.value) || 0);
+    if (totalStockElement) totalStockElement.textContent = total;
 }
 
-// Handle stock type change
-stockTypeSelect?.addEventListener('change', function() {
-    const selectedTypeId = parseInt(this.value);
-    const selectedType = stockTypesData.find(t => t.id === selectedTypeId);
-    
-    if (!selectedType || !selectedType.options || selectedType.options.length === 0) {
+stockTypeSelect?.addEventListener('change', function () {
+    const type = stockTypesData.find(t => t.id == this.value);
+
+    if (!type || !type.options.length) {
         stockOptionsContainer.classList.add('hidden');
         totalStockDisplay.classList.add('hidden');
         stockOptionsGrid.innerHTML = '';
         return;
     }
-    
-    // Show containers
+
     stockOptionsContainer.classList.remove('hidden');
     totalStockDisplay.classList.remove('hidden');
-    
-    // Generate stock input fields based on display type
+
     let html = '';
-    
-    if (selectedType.display_type === 'none') {
-        // One size fits all
-        const option = selectedType.options[0];
+
+    if (type.display_type === 'none') {
+        const option = type.options[0];
         html = `
-            <div class="bg-neutral-950 border border-neutral-700 rounded-lg p-4">
-                <label class="block text-gray-400 mb-2">Quantity</label>
-                <input type="number" 
-                       name="stock[${option.id}]" 
-                       min="0" 
-                       value="0"
-                       class="w-full bg-neutral-900 border border-neutral-600 rounded-lg p-3 text-gray-200 
-                              focus:outline-none focus:border-yellow-400 transition"
-                       oninput="updateTotalStock()"
-                       required>
-            </div>
-        `;
+            <div class="bg-slate-50 border border-slate-300 rounded-xl p-4">
+                <label class="block text-slate-700 mb-2">Quantity</label>
+                <input type="number" name="stock[${option.id}]"
+                       value="0" min="0"
+                       class="w-full bg-white border border-slate-300 rounded-full px-4 py-3 text-slate-900
+                              focus:outline-none focus:border-slate-900 transition-all duration-300 no-spinners"
+                       oninput="updateTotalStock()" required>
+            </div>`;
     } else {
-        // Multiple options (grid, dropdown, color-swatch)
-        const gridClass = selectedType.options.length > 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1';
+        const gridClass = type.options.length > 3 ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1';
         html = `<div class="grid ${gridClass} gap-4">`;
-        
-        selectedType.options.forEach(option => {
+        type.options.forEach(option => {
             html += `
-                <div class="bg-neutral-950 border border-neutral-700 rounded-lg p-4">
-                    <label class="block text-gray-400 mb-2 font-medium">${option.label}</label>
-                    <input type="number" 
-                           name="stock[${option.id}]" 
-                           min="0" 
-                           value="0"
-                           class="w-full bg-neutral-900 border border-neutral-600 rounded-lg p-3 text-gray-200 
-                                  focus:outline-none focus:border-yellow-400 transition"
-                           oninput="updateTotalStock()"
-                           required>
-                </div>
-            `;
+                <div class="bg-slate-50 border border-slate-300 rounded-xl p-4">
+                    <label class="block text-slate-700 mb-2 font-medium">${option.label}</label>
+                    <input type="number" name="stock[${option.id}]"
+                           value="0" min="0"
+                           class="w-full bg-white border border-slate-300 rounded-full px-4 py-3 text-slate-900
+                                  focus:outline-none focus:border-slate-900 transition-all duration-300 no-spinners"
+                           oninput="updateTotalStock()" required>
+                </div>`;
         });
-        
-        html += '</div>';
+        html += `</div>`;
     }
-    
+
     stockOptionsGrid.innerHTML = html;
     updateTotalStock();
 });
 
-// Image preview function
-function previewImage(event) {
-    const preview = document.getElementById('imagePreview');
+function addImage(event) {
     const file = event.target.files[0];
-    
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-            preview.classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) { alert('Image size must be less than 2MB'); event.target.value = ''; return; }
+    if (!file.type.startsWith('image/')) { alert('Please select a valid image file'); event.target.value = ''; return; }
+
+    const imageId = `image-${imageCounter++}`;
+    const isPrimary = imageFiles.length === 0;
+
+    imageFiles.push({ id: imageId, file: file, isPrimary: isPrimary });
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const container = document.getElementById('images-container');
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'relative group shadow-sm'; 
+        imageDiv.id = imageId;
+        imageDiv.innerHTML = `
+            <img src="${e.target.result}" 
+                 class="w-full h-32 object-cover rounded-xl border-2 ${isPrimary ? 'border-slate-900' : 'border-slate-300'}">
+            
+            ${isPrimary ? `
+                <div class="absolute top-2 left-2 bg-slate-900 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                    Primary
+                </div>
+            ` : `
+                <button type="button" 
+                        onclick="setPrimaryImage('${imageId}')"
+                        class="absolute top-2 left-2 bg-white/80 backdrop-blur-sm text-slate-600 text-xs px-2 py-1 rounded-full hover:bg-slate-900 hover:text-white transition shadow-md">
+                    Set as Primary
+                </button>
+            `}
+            
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 
+                       transition-opacity rounded-xl flex items-center justify-center gap-2">
+                <button type="button" 
+                        onclick="removeImage('${imageId}')"
+                        class="bg-red-600 text-white px-3 py-1.5 rounded-full text-sm hover:bg-red-700 transition flex items-center gap-1 font-medium">
+                    <x-heroicon-o-trash class="w-4 h-4" />
+                    Remove
+                </button>
+            </div>
+            
+            <div class="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg">
+                ${Math.round(file.size / 1024)}KB
+            </div>
+        `;
+        container.appendChild(imageDiv);
+    };
+    reader.readAsDataURL(file);
+
+    event.target.value = '';
+    updateHiddenInputs();
 }
 
-// Trigger change event on page load if a stock type is pre-selected
-if (stockTypeSelect?.value) {
+function removeImage(imageId) {
+    const index = imageFiles.findIndex(img => img.id === imageId);
+    if (index > -1) {
+        const wasPrimary = imageFiles[index].isPrimary;
+        imageFiles.splice(index, 1);
+        if (wasPrimary && imageFiles.length > 0) imageFiles[0].isPrimary = true;
+    }
+
+    const element = document.getElementById(imageId);
+    if (element) element.remove();
+
+    rerenderImages();
+    updateHiddenInputs();
+}
+
+function setPrimaryImage(imageId) {
+    imageFiles.forEach(img => img.isPrimary = (img.id === imageId));
+    rerenderImages();
+}
+
+function rerenderImages() {
+    const container = document.getElementById('images-container');
+    container.innerHTML = '';
+    const sortedImages = [...imageFiles].sort((a,b)=>b.isPrimary-a.isPrimary);
+    sortedImages.forEach(imageData => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'relative group shadow-sm';
+            imageDiv.id = imageData.id;
+            imageDiv.innerHTML = `
+                <img src="${e.target.result}" 
+                     class="w-full h-32 object-cover rounded-xl border-2 ${imageData.isPrimary ? 'border-slate-900' : 'border-slate-300'}">
+                
+                ${imageData.isPrimary ? `
+                    <div class="absolute top-2 left-2 bg-slate-900 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                        Primary
+                    </div>
+                ` : `
+                    <button type="button" 
+                            onclick="setPrimaryImage('${imageData.id}')"
+                            class="absolute top-2 left-2 bg-white/80 backdrop-blur-sm text-slate-600 text-xs px-2 py-1 rounded-full hover:bg-slate-900 hover:text-white transition shadow-md">
+                        Set as Primary
+                    </button>
+                `}
+                
+                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 
+                           transition-opacity rounded-xl flex items-center justify-center gap-2">
+                    <button type="button" 
+                            onclick="removeImage('${imageData.id}')"
+                            class="bg-red-600 text-white px-3 py-1.5 rounded-full text-sm hover:bg-red-700 transition flex items-center gap-1 font-medium">
+                        <x-heroicon-o-trash class="w-4 h-4" />
+                        Remove
+                    </button>
+                </div>
+                
+                <div class="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg">
+                    ${Math.round(imageData.file.size / 1024)}KB
+                </div>
+            `;
+            container.appendChild(imageDiv);
+        };
+        reader.readAsDataURL(imageData.file);
+    });
+    updateHiddenInputs();
+}
+
+function updateHiddenInputs() {
+    const hiddenContainer = document.getElementById('hidden-inputs-container');
+    hiddenContainer.innerHTML = '';
+
+    const sortedImages = [...imageFiles].sort((a,b)=>b.isPrimary-a.isPrimary);
+    sortedImages.forEach((imageData,index) => {
+        const dt = new DataTransfer();
+        dt.items.add(imageData.file);
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.name = 'images[]';
+        input.files = dt.files;
+        input.style.display = 'none';
+        hiddenContainer.appendChild(input);
+    });
+}
+
+if (stockTypeSelect.value) {
     stockTypeSelect.dispatchEvent(new Event('change'));
 }
 </script>

@@ -1,0 +1,287 @@
+.
+├── app
+│   ├── Http
+│   │   ├── Controllers
+│   │   │   ├── AboutUsController.php
+│   │   │   ├── Admin
+│   │   │   │   ├── AboutUsAdminController.php
+│   │   │   │   ├── AdminCategoryController.php
+│   │   │   │   ├── AdminCheckout.php
+│   │   │   │   ├── AdminController.php
+│   │   │   │   ├── AdminDiscountController.php
+│   │   │   │   ├── AdminFeaturesController.php
+│   │   │   │   ├── AdminFooterController.php
+│   │   │   │   ├── AdminLogoAndThemeController.php
+│   │   │   │   ├── AdminNewsletterController.php
+│   │   │   │   ├── AdminProductController.php
+│   │   │   │   ├── AdminStockTypeController.php
+│   │   │   │   ├── AdminUserController.php
+│   │   │   │   ├── HeroHomeController.php
+│   │   │   │   └── OrderController.php
+│   │   │   ├── Auth
+│   │   │   │   ├── AuthenticatedSessionController.php
+│   │   │   │   ├── ConfirmablePasswordController.php
+│   │   │   │   ├── EmailVerificationNotificationController.php
+│   │   │   │   ├── EmailVerificationPromptController.php
+│   │   │   │   ├── NewPasswordController.php
+│   │   │   │   ├── PasswordController.php
+│   │   │   │   ├── PasswordResetLinkController.php
+│   │   │   │   ├── RegisteredUserController.php
+│   │   │   │   └── VerifyEmailController.php
+│   │   │   ├── CartController.php
+│   │   │   ├── CheckoutController.php
+│   │   │   ├── Controller.php
+│   │   │   ├── HomeController.php
+│   │   │   ├── NewsletterController.php
+│   │   │   ├── ProductController.php
+│   │   │   ├── ProfileController.php
+│   │   │   └── ShippingController.php
+│   │   ├── Middleware
+│   │   │   └── IsAdmin.php
+│   │   └── Requests
+│   │       ├── Auth
+│   │       │   └── LoginRequest.php
+│   │       └── ProfileUpdateRequest.php
+│   ├── Livewire
+│   │   ├── CartComponent.php
+│   │   └── CartCounter.php
+│   ├── Models
+│   │   ├── AboutUs.php
+│   │   ├── BrandStorySection.php
+│   │   ├── Category.php
+│   │   ├── Commune.php
+│   │   ├── Discount.php
+│   │   ├── FeatureItem.php
+│   │   ├── FeaturesSection.php
+│   │   ├── Footer.php
+│   │   ├── HeroHomePage.php
+│   │   ├── Logo.php
+│   │   ├── OrderItem.php
+│   │   ├── Order.php
+│   │   ├── ProductImage.php
+│   │   ├── Product.php
+│   │   ├── ProductStock.php
+│   │   ├── StockTypeOption.php
+│   │   ├── StockType.php
+│   │   ├── Theme.php
+│   │   ├── Usage_traking.php
+│   │   ├── User.php
+│   │   └── Wilaya.php
+│   ├── Providers
+│   │   └── AppServiceProvider.php
+│   └── View
+│       ├── categories
+│       └── Components
+│           ├── AppLayout.php
+│           └── GuestLayout.php
+├── architecture.txt
+├── artisan
+├── bootstrap
+│   ├── app.php
+│   ├── cache
+│   │   ├── config.php
+│   │   ├── .gitignore
+│   │   ├── packages.php
+│   │   └── services.php
+│   └── providers.php
+├── composer.json
+├── composer.lock
+├── config
+│   ├── app.php
+│   ├── auth.php
+│   ├── cache.php
+│   ├── database.php
+│   ├── filesystems.php
+│   ├── logging.php
+│   ├── mail.php
+│   ├── queue.php
+│   ├── services.php
+│   └── session.php
+├── database
+│   ├── database.sqlite
+│   ├── factories
+│   │   └── UserFactory.php
+│   ├── .gitignore
+│   ├── migrations
+│   │   ├── 0001_01_01_000000_create_users_table.php
+│   │   ├── 0001_01_01_000001_create_cache_table.php
+│   │   ├── 0001_01_01_000002_create_jobs_table.php
+│   │   ├── 2025_10_18_102826_create_categories_table.php
+│   │   ├── 2025_11_08_152444_create_orders_and_items_tables.php
+│   │   ├── 2025_11_15_200106_create_wilayas_table.php
+│   │   ├── 2025_11_15_200538_create_communes_table.php
+│   │   ├── 2025_11_15_202544_add_shipping_to_orders_table.php
+│   │   ├── 2025_11_25_153010_add_totals_columns_to_orders_table.php
+│   │   ├── 2025_11_28_232340_add_status_to_orders_table.php
+│   │   ├── 2025_12_01_143854_create_products_table.php
+│   │   ├── 2025_12_01_143855_create_stock_types_table.php
+│   │   ├── 2025_12_01_143856_create_stock_type_options_table.php
+│   │   ├── 2025_12_01_143857_create_product_stock_table.php
+│   │   ├── 2025_12_01_143859_modify_products_table_for_dynamic_stock.php
+│   │   ├── 2025_12_02_173907_create_discounts_tables.php
+│   │   ├── 2025_12_06_142646_create_product_images_table.php
+│   │   ├── 2025_12_08_153204_create_about_us_table.php
+│   │   ├── 2025_12_09_113321_notifications.php
+│   │   ├── 2025_12_09_115056_add_is_admin_to_users_table.php
+│   │   ├── 2025_12_09_154125_add_stock_option_id_to_order_items_table.php
+│   │   ├── 2025_12_10_000000_custom_logo.php
+│   │   ├── 2025_12_11_000000_custom_hero_homepage.php
+│   │   ├── 2025_12_14_000000_custom_footer.php
+│   │   ├── 2025_12_14_164927_create_features_sections_table.php
+│   │   ├── 2025_12_15_114442_create_newsletter_subscribers_table.php
+│   │   └── 2025_12_15_150113_create_themes_table.php
+│   └── seeders
+│       ├── AdminUserSeeder.php
+│       ├── CommunesSeeder.php
+│       ├── DatabaseSeeder.php
+│       ├── FeaturesSectionSeeder.php
+│       ├── StockTypeSeeder.php
+│       └── WilayaSeeder.php
+├── ecommerce-web
+│   └── .gitattributes
+├── .editorconfig
+├── .env
+├── .env.example
+├── .gitattributes
+├── .gitignore
+├── package.json
+├── package-lock.json
+├── phpunit.xml
+├── postcss.config.js
+├── public
+│   ├── build
+│   │   ├── assets
+│   │   │   ├── app-CXDpL9bK.js
+│   │   │   └── app-Dyfeyjsv.css
+│   │   └── manifest.json
+│   ├── favicon.ico
+│   ├── .htaccess
+│   ├── index.php
+│   └── robots.txt
+├── README.md
+├── README_TWO.md
+├── resources
+│   ├── css
+│   │   └── app.css
+│   ├── js
+│   │   ├── app.js
+│   │   └── bootstrap.js
+│   └── views
+│       ├── about-us.blade.php
+│       ├── admin
+│       │   ├── about-us
+│       │   │   └── edit.blade.php
+│       │   ├── appearance
+│       │   │   └── settings.blade.php
+│       │   ├── categories
+│       │   │   ├── create.blade.php
+│       │   │   ├── edit.blade.php
+│       │   │   └── index.blade.php
+│       │   ├── dashboard.blade.php
+│       │   ├── discounts
+│       │   │   ├── create.blade.php
+│       │   │   ├── edit.blade.php
+│       │   │   ├── index.blade.php
+│       │   │   └── show.blade.php
+│       │   ├── features
+│       │   │   ├── brand-story
+│       │   │   │   └── edit.blade.php
+│       │   │   ├── edit.blade.php
+│       │   │   └── items
+│       │   │       ├── create.blade.php
+│       │   │       └── edit.blade.php
+│       │   ├── footer
+│       │   │   └── edit.blade.php
+│       │   ├── hero-home
+│       │   │   └── edit.blade.php
+│       │   ├── layout.blade.php
+│       │   ├── logo.blade.php
+│       │   ├── newsletter
+│       │   │   └── index.blade.php
+│       │   ├── orders
+│       │   │   ├── orders.blade.php
+│       │   │   └── show.blade.php
+│       │   ├── products
+│       │   │   ├── create.blade.php
+│       │   │   ├── edit.blade.php
+│       │   │   └── index.blade.php
+│       │   ├── stock-types
+│       │   │   ├── create.blade.php
+│       │   │   ├── edit.blade.php
+│       │   │   ├── index.blade.php
+│       │   │   └── show.blade.php
+│       │   └── users
+│       │       ├── create.blade.php
+│       │       ├── edit.blade.php
+│       │       └── index.blade.php
+│       ├── auth
+│       │   ├── confirm-password.blade.php
+│       │   ├── forgot-password.blade.php
+│       │   ├── login.blade.php
+│       │   ├── register.blade.php
+│       │   ├── reset-password.blade.php
+│       │   └── verify-email.blade.php
+│       ├── cart
+│       │   └── index.blade.php
+│       ├── checkout
+│       │   ├── billing-and-shipping.blade.php
+│       │   └── thankyou.blade.php
+│       ├── components
+│       │   ├── application-logo.blade.php
+│       │   ├── auth-session-status.blade.php
+│       │   ├── danger-button.blade.php
+│       │   ├── dropdown.blade.php
+│       │   ├── dropdown-link.blade.php
+│       │   ├── input-error.blade.php
+│       │   ├── input-label.blade.php
+│       │   ├── modal.blade.php
+│       │   ├── nav-link.blade.php
+│       │   ├── primary-button.blade.php
+│       │   ├── quick-buy-modal.php
+│       │   ├── responsive-nav-link.blade.php
+│       │   ├── secondary-button.blade.php
+│       │   └── text-input.blade.php
+│       ├── home.blade.php
+│       ├── layouts
+│       │   ├── app.blade.php
+│       │   ├── features.blade.php
+│       │   ├── footer.blade.php
+│       │   ├── guest.blade.php
+│       │   ├── hero.blade.php
+│       │   ├── logo.blade.php
+│       │   └── navigation.blade.php
+│       ├── livewire
+│       │   ├── cart-component.blade.php
+│       │   └── cart-counter.blade.php
+│       ├── products
+│       │   ├── index.blade.php
+│       │   └── show.blade.php
+│       └── profile
+│           ├── edit.blade.php
+│           └── partials
+│               ├── delete-user-form.blade.php
+│               ├── update-password-form.blade.php
+│               └── update-profile-information-form.blade.php
+├── routes
+│   ├── auth.php
+│   ├── console.php
+│   └── web.php
+├── tailwind.config.js
+├── tests
+│   ├── Feature
+│   │   ├── Auth
+│   │   │   ├── AuthenticationTest.php
+│   │   │   ├── EmailVerificationTest.php
+│   │   │   ├── PasswordConfirmationTest.php
+│   │   │   ├── PasswordResetTest.php
+│   │   │   ├── PasswordUpdateTest.php
+│   │   │   └── RegistrationTest.php
+│   │   ├── ExampleTest.php
+│   │   └── ProfileTest.php
+│   ├── Pest.php
+│   ├── TestCase.php
+│   └── Unit
+│       └── ExampleTest.php
+└── vite.config.js
+
+59 directories, 226 files

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\Discount;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Wilaya;
@@ -40,7 +41,6 @@ class CheckoutController extends Controller
             'commune'    => 'required|string|max:120',
             'address'    => 'required|string|max:255',
             'notes'      => 'nullable|string|max:1000',
-            'coupon_code' => 'nullable|string',
         ]);
 
         $cart = session('cart', []);
@@ -52,7 +52,7 @@ class CheckoutController extends Controller
         DB::beginTransaction();
         
         try {
-            // Validate stock availability
+            // ONLY VALIDATE stock availability - DON'T DEDUCT IT YET
             foreach ($cart as $cartKey => $item) {
                 $product = Product::find($item['product_id']);
                 
@@ -64,11 +64,11 @@ class CheckoutController extends Controller
                     // New dynamic stock system
                     $productStock = ProductStock::where('product_id', $product->id)
                         ->where('stock_type_option_id', $item['stock_option_id'])
-                        ->lockForUpdate()
                         ->first();
 
                     if (!$productStock || $productStock->quantity < $item['quantity']) {
-                        throw new \Exception("Not enough stock for {$item['name']} ({$item['stock_label']}). Only {$productStock->quantity} available.");
+                        $available = $productStock ? $productStock->quantity : 0;
+                        throw new \Exception("Not enough stock for {$item['name']} ({$item['stock_label']}). Only {$available} available.");
                     }
                 } else {
                     // Old system fallback
@@ -96,17 +96,35 @@ class CheckoutController extends Controller
                 $subtotal += $item['price'] * $item['quantity'];
             }
 
-            // Apply discount if coupon exists
-            $discount_amount = 0;
-            $coupon_code = null;
-            if (!empty($data['coupon_code'])) {
-                // Add your coupon validation logic here
-                // For now, this is a placeholder
-                $coupon_code = $data['coupon_code'];
-                // $discount_amount = calculate discount based on coupon
+            // Get discount from session (applied in cart)
+            $discount = session('discount', []);
+            $discount_amount = $discount['amount'] ?? 0;
+            $coupon_code = $discount['code'] ?? null;
+            $discount_id = $discount['id'] ?? null;
+
+            // Validate discount one more time before creating order
+            if ($discount_id) {
+                $discountModel = Discount::find($discount_id);
+                
+                if ($discountModel) {
+                    // Check if discount is still valid
+                    if (!$discountModel->isValid()) {
+                        session()->forget('discount');
+                        throw new \Exception("The discount code has expired or is no longer valid.");
+                    }
+
+                    // Check usage limits again
+                    $userId = Auth::id();
+                    $sessionId = session()->getId();
+                    
+                    if (!$discountModel->canBeUsedBy($userId, $sessionId)) {
+                        session()->forget('discount');
+                        throw new \Exception("You have already used this discount code the maximum number of times.");
+                    }
+                }
             }
 
-            // Create order
+            // Create order with PENDING status
             $order = Order::create([
                 'user_id'         => Auth::id(),
                 'first_name'      => $data['first_name'],
@@ -118,52 +136,50 @@ class CheckoutController extends Controller
                 'address'         => $data['address'],
                 'notes'           => $data['notes'] ?? null,
                 'subtotal'        => $subtotal,
+                'discount_id'     => $discount_id,
                 'discount_amount' => $discount_amount,
                 'coupon_code'     => $coupon_code,
                 'shipping_cost'   => $shipping_cost,
                 'total'           => $subtotal - $discount_amount + $shipping_cost,
-                'status'          => Order::STATUS_PENDING,
+                'status'          => Order::STATUS_PENDING, // Order starts as PENDING
             ]);
 
-            // Create order items and update stock
+            // Create order items WITHOUT reducing stock
             foreach ($cart as $cartKey => $item) {
-                $product = Product::findOrFail($item['product_id']);
-                
-                // Reduce stock
-                if ($item['stock_option_id']) {
-                    $productStock = ProductStock::where('product_id', $product->id)
-                        ->where('stock_type_option_id', $item['stock_option_id'])
-                        ->first();
-                    
-                    $productStock->decreaseStock($item['quantity']);
-                } else {
-                    // Old system
-                    if ($product->stock_type === 'size-based') {
-                        $size = str_replace('old_', '', $item['stock_option_id']);
-                        $sizeField = 'taille_' . strtoupper($size);
-                        $product->$sizeField -= $item['quantity'];
-                    } else {
-                        $product->total_quantity -= $item['quantity'];
-                    }
-                    $product->save();
-                }
-
-                // Create order item
                 OrderItem::create([
-                    'order_id'    => $order->id,
-                    'product_id'  => $item['product_id'],
-                    'name'        => $item['name'],
-                    'image'       => $item['image'],
-                    'price'       => $item['price'],
-                    'quantity'    => $item['quantity'],
-                    'taille_type' => $item['stock_label'],
+                    'order_id'         => $order->id,
+                    'product_id'       => $item['product_id'],
+                    'name'             => $item['name'],
+                    'image'            => $item['image'],
+                    'price'            => $item['price'],
+                    'quantity'         => $item['quantity'],
+                    'taille_type'      => $item['stock_label'],
+                    'stock_option_id'  => $item['stock_option_id'], // Store this for later stock deduction
                 ]);
+            }
+
+            // RECORD DISCOUNT USAGE
+            if ($discount_id && $discount_amount > 0) {
+                $discountModel = Discount::find($discount_id);
+                if ($discountModel) {
+                    $userId = Auth::id();
+                    $sessionId = session()->getId();
+                    
+                    $discountModel->recordUsage(
+                        $userId ?: null, 
+                        $order->id, 
+                        $discount_amount, 
+                        $userId ? null : $sessionId
+                    );
+                }
             }
 
             DB::commit();
 
-            // Clear cart
+            // Clear cart and discount from session
             session()->forget('cart');
+            session()->forget('discount');
+            session()->forget('shipping_cost');
             
             return redirect()->route('order.thankyou', $order->id);
             

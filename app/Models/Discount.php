@@ -42,24 +42,28 @@ class Discount extends Model
     ];
 
     // Relationship with users who used this discount
-    // WITHOUT timestamps in pivot table
     public function users()
     {
         return $this->belongsToMany(User::class, 'discount_user')
-            ->withPivot('order_id', 'discount_amount', 'used_at', 'session_id')
-            ->withoutTimestamps(); // This is the key fix
+            ->withPivot('order_id', 'discount_amount', 'used_at', 'session_id');
     }
 
-    // Get categories this discount applies to
-    public function categories()
+    // Get categories this discount applies to (as a collection for Blade)
+    public function getCategoriesAttribute()
     {
-        return Category::whereIn('id', $this->category_ids ?? [])->get();
+        if (empty($this->category_ids)) {
+            return collect();
+        }
+        return Category::whereIn('id', $this->category_ids)->get();
     }
 
-    // Get products this discount applies to
-    public function products()
+    // Get products this discount applies to (as a collection for Blade)
+    public function getProductsAttribute()
     {
-        return Product::whereIn('id', $this->product_ids ?? [])->get();
+        if (empty($this->product_ids)) {
+            return collect();
+        }
+        return Product::whereIn('id', $this->product_ids)->get();
     }
 
     // Check if discount is currently valid
@@ -86,18 +90,49 @@ class Discount extends Model
         return true;
     }
 
-    // Check if user can use this discount
-    public function canBeUsedByUser($userId)
+    // Check if user/session can use this discount
+    // Handles both authenticated users and guest sessions
+    public function canBeUsedBy($userId = null, $sessionId = null)
     {
+        // If no per-user limit is set, anyone can use it
         if (!$this->per_user_limit) {
             return true;
         }
 
-        $usageCount = $this->users()
-            ->where('user_id', $userId)
-            ->count();
+        $usageCount = 0;
+
+        // Check usage for authenticated user
+        if ($userId) {
+            $usageCount = $this->users()
+                ->where('user_id', $userId)
+                ->count();
+        } 
+        // Check usage for guest session
+        elseif ($sessionId) {
+            $usageCount = $this->users()
+                ->wherePivot('session_id', $sessionId)
+                ->count();
+        }
 
         return $usageCount < $this->per_user_limit;
+    }
+
+    // Check if discount applies to the cart items
+    public function appliesTo($cart)
+    {
+        // If applies to all products, it applies to any cart
+        if ($this->applies_to_all) {
+            return true;
+        }
+
+        // Check if at least one item in cart is eligible
+        foreach ($cart as $item) {
+            if ($this->appliesToProduct($item['product_id'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Check if discount applies to a specific product
@@ -108,7 +143,7 @@ class Discount extends Model
         }
 
         // Check if product is directly included
-        if (in_array($productId, $this->product_ids ?? [])) {
+        if (in_array($productId, $this->category_ids ?? [])) {
             return true;
         }
 

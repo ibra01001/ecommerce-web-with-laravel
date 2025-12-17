@@ -8,22 +8,37 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    // Show all products with optional category filter
-public function index(Request $request)
-{
-    // Get all categories for the filter menu
-    $categories = Category::all();
-    
-    // Get products with optional category filtering and pagination
-    $products = Product::with('category')
-        ->when($request->category, function($query, $categoryId) {
-            $query->where('category_id', $categoryId);
-        })
-        ->paginate(12) // Change from ->get() to ->paginate(12)
-        ->appends($request->query()); // Preserve query parameters
-    
-    return view('products.index', compact('products', 'categories'));
-}
+    // Show all products with optional category filter and search
+    public function index(Request $request)
+    {
+        // Get all categories for the filter menu
+        $categories = Category::all();
+        
+        // Start building the query
+        $query = Product::with(['category', 'images', 'stock.stockTypeOption']);
+        
+        // Category filter
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category_id', $request->category);
+        }
+        
+        // Search functionality
+        if ($request->has('q') && $request->q != '') {
+            $searchTerm = $request->q;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
+        // Order by newest first
+        $query->orderBy('created_at', 'desc');
+        
+        // Paginate results and preserve query parameters
+        $products = $query->paginate(12)->appends($request->query());
+        
+        return view('products.index', compact('products', 'categories'));
+    }
 
     // Show create product form
     public function create()
@@ -75,23 +90,74 @@ public function index(Request $request)
     // Show single product with related products
     public function show($id)
     {
-        $product = Product::with('category')->findOrFail($id);
+        $product = Product::with(['category', 'images', 'stockType', 'stock.stockTypeOption'])
+            ->findOrFail($id);
         
-        // Get related products from the same category
-        $relatedProducts = Product::where('category_id', $product->category_id)
+        // Prepare images collection
+        $images = $product->images->count() ? $product->images : collect();
+        if($images->isEmpty() && $product->image) {
+            $images = collect([(object)[
+                'image_url' => asset('storage/' . $product->image), 
+                'id' => 0
+            ]]);
+        }
+        
+        // Get related products from the same category that are in stock
+        $relatedProducts = Product::with(['images', 'category', 'stock'])
+            ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->where(function($query) {
-                $query->where('stock_type', 'total')
-                    ->where('total_quantity', '>', 0)
-                    ->orWhere(function($q) {
-                        $q->where('stock_type', 'size-based')
-                          ->whereRaw('(taille_S + taille_M + taille_L + taille_XL + taille_XXL) > 0');
-                    });
+            ->whereHas('stock', function($query) {
+                $query->where('quantity', '>', 0);
             })
+            ->orWhere(function($query) use ($product) {
+                $query->where('category_id', $product->category_id)
+                      ->where('id', '!=', $product->id)
+                      ->where('stock_type', 'total')
+                      ->where('total_quantity', '>', 0);
+            })
+            ->orWhere(function($query) use ($product) {
+                $query->where('category_id', $product->category_id)
+                      ->where('id', '!=', $product->id)
+                      ->where('stock_type', 'size-based')
+                      ->whereRaw('(taille_S + taille_M + taille_L + taille_XL + taille_XXL) > 0');
+            })
+            ->inRandomOrder()
             ->limit(4)
             ->get();
         
-        return view('products.show', compact('product', 'relatedProducts'));
+        return view('products.show', compact('product', 'images', 'relatedProducts'));
+    }
+
+    // API endpoint for product options (for quick buy modal)
+   public function getOptions($id)
+{
+    $product = Product::with(['stock.stockTypeOption'])->findOrFail($id);
+    
+    $options = [];
+    
+    // New dynamic stock system
+    if ($product->usesDynamicStock()) {
+        $stockOptions = $product->getAvailableStockOptions();
+        foreach ($stockOptions as $option) {
+            $options[] = [
+                'id' => $option['id'],  // This is now the stock_type_option_id (integer)
+                'label' => $option['label'],
+                'quantity' => $option['quantity'],
+                'in_stock' => $option['in_stock']
+            ];
+        }
+        return response()->json(['options' => $options]);
+    }
+    
+    // If product doesn't use dynamic stock, return empty (they shouldn't need options)
+    return response()->json(['options' => []]);
+}
+    // Show edit form
+    public function edit($id)
+    {
+        $product = Product::findOrFail($id);
+        $categories = Category::all();
+        return view('products.edit', compact('product', 'categories'));
     }
 
     // Update product

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,11 +12,12 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'stock_option_id',
         'name',
         'image',
         'price',
         'quantity',
-        'taille_type'
+        'taille_type',
     ];
 
     protected $casts = [
@@ -23,19 +25,18 @@ class OrderItem extends Model
         'quantity' => 'integer',
     ];
 
-    /**
-     * Get the order that owns the order item
-     */
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
 
-    /**
-     * Get the product for the order item
-     */
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+    
+    public function stockOption()
+    {
+        return $this->belongsTo(StockTypeOption::class, 'stock_option_id');
     }
 }

@@ -64,7 +64,7 @@ class StockTypeSeeder extends Seeder
         // 4. Dumbbell Weights (Example for your use case)
         $weights = StockType::create([
             'name' => 'Dumbbell Weights',
-            'display_type' => 'dropdown',
+            'display_type' => 'grid',
             'sort_order' => 4,
             'is_active' => true,
         ]);

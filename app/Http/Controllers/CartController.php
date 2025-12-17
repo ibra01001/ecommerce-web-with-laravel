@@ -23,133 +23,150 @@ class CartController extends Controller
         return view('cart.index', compact('cart', 'total'));
     }
  
-    public function add(Request $request, $id)
-    {
-        $product = Product::findOrFail($id);
-        
-        // Validate request
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:1',
-            'stock_option_id' => 'nullable|integer',
-        ]);
+   public function add(Request $request, $id)
+{
+    $product = Product::with(['stockType', 'stock.stockTypeOption'])->findOrFail($id);
+    
+    // Validate request
+    $validated = $request->validate([
+        'quantity' => 'required|integer|min:1',
+        'stock_option_id' => 'nullable|integer',
+    ]);
 
-        // Handle dynamic stock products
-        if ($product->usesDynamicStock()) {
-            // Check if stock option is required
-            if ($product->stockType->display_type !== 'none' && empty($validated['stock_option_id'])) {
-                return redirect()->back()->with('error', 'Please select an option');
-            }
+    $requestedQty = $validated['quantity'];
 
-            // Get the stock option
-            if (!empty($validated['stock_option_id'])) {
-                $stockOption = StockTypeOption::findOrFail($validated['stock_option_id']);
-                
-                // Verify it belongs to this product's stock type
-                if ($stockOption->stock_type_id !== $product->stock_type_id) {
-                    return redirect()->back()->with('error', 'Invalid stock option');
-                }
-
-                // Get the product stock for this option
-                $productStock = ProductStock::where('product_id', $product->id)
-                    ->where('stock_type_option_id', $stockOption->id)
-                    ->first();
-
-                if (!$productStock) {
-                    return redirect()->back()->with('error', 'Stock information not found');
-                }
-
-                // Check if enough stock is available
-                if ($productStock->quantity < $validated['quantity']) {
-                    return redirect()->back()->with('error', 'Not enough stock available for ' . $stockOption->label);
-                }
-
-                $stockLabel = $stockOption->label;
-                $stockOptionId = $stockOption->id;
-                $availableStock = $productStock->quantity;
-            } else {
-                // "One Size" product with dynamic stock (display_type = 'none')
-                $stockOption = $product->stockType->options()->first();
-                
-                if (!$stockOption) {
-                    return redirect()->back()->with('error', 'Stock option not found');
-                }
-
-                $productStock = ProductStock::where('product_id', $product->id)
-                    ->where('stock_type_option_id', $stockOption->id)
-                    ->first();
-
-                if (!$productStock || $productStock->quantity < $validated['quantity']) {
-                    return redirect()->back()->with('error', 'Not enough stock available');
-                }
-
-                $stockLabel = 'One Size';
-                $stockOptionId = $stockOption->id;
-                $availableStock = $productStock->quantity;
-            }
-
-            // Create unique cart key
-            $cartKey = $id . '-' . $stockOptionId;
-
-            $cart = session()->get('cart', []);
-
-            if (isset($cart[$cartKey])) {
-                // Item already in cart, increase quantity
-                $newQuantity = $cart[$cartKey]['quantity'] + $validated['quantity'];
-                
-                // Check stock limit
-                if ($newQuantity > $availableStock) {
-                    return redirect()->back()->with('error', 'Cannot add more. Stock limit reached for ' . $stockLabel);
-                }
-                
-                $cart[$cartKey]['quantity'] = $newQuantity;
-            } else {
-                // Add new item to cart
-                $cart[$cartKey] = [
-                    'product_id' => $product->id,
-                    'name' => $product->name,
-                    'price' => (float)$product->price,
-                    'quantity' => $validated['quantity'],
-                    'stock_option_id' => $stockOptionId,
-                    'stock_label' => $stockLabel,
-                    'image' => $product->image,
-                ];
-            }
-
-            session()->put('cart', $cart);
-            return redirect()->back()->with('success', 'Product added to cart!');
+    // Handle dynamic stock products
+    if ($product->usesDynamicStock()) {
+        // Check if stock option is required
+        if ($product->stockType->display_type !== 'none' && empty($validated['stock_option_id'])) {
+            return redirect()->back()->with('error', 'Please select an option');
         }
 
-        // Handle legacy total stock products (if you still have any)
-        if ($product->total_stock < $validated['quantity']) {
-            return redirect()->back()->with('error', 'Not enough stock available');
+        // Get the stock option
+        if (!empty($validated['stock_option_id'])) {
+            $stockOption = StockTypeOption::findOrFail($validated['stock_option_id']);
+            
+            // Verify it belongs to this product's stock type
+            if ($stockOption->stock_type_id !== $product->stock_type_id) {
+                return redirect()->back()->with('error', 'Invalid stock option');
+            }
+
+            // Get the product stock for this option
+            $productStock = ProductStock::where('product_id', $product->id)
+                ->where('stock_type_option_id', $stockOption->id)
+                ->first();
+
+            if (!$productStock) {
+                return redirect()->back()->with('error', 'Stock information not found');
+            }
+
+            $stockLabel = $stockOption->label;
+            $stockOptionId = $stockOption->id;
+            $availableStock = $productStock->quantity;
+        } else {
+            // "One Size" product with dynamic stock (display_type = 'none')
+            $stockOption = $product->stockType->options()->first();
+            
+            if (!$stockOption) {
+                return redirect()->back()->with('error', 'Stock option not found');
+            }
+
+            $productStock = ProductStock::where('product_id', $product->id)
+                ->where('stock_type_option_id', $stockOption->id)
+                ->first();
+
+            if (!$productStock) {
+                return redirect()->back()->with('error', 'Stock information not found');
+            }
+
+            $stockLabel = 'One Size';
+            $stockOptionId = $stockOption->id;
+            $availableStock = $productStock->quantity;
         }
 
-        $cartKey = $id . '-default';
+        // Create unique cart key
+        $cartKey = $id . '-' . $stockOptionId;
         $cart = session()->get('cart', []);
 
-        if (isset($cart[$cartKey])) {
-            $newQuantity = $cart[$cartKey]['quantity'] + $validated['quantity'];
-            
-            if ($newQuantity > $product->total_stock) {
-                return redirect()->back()->with('error', 'Cannot add more. Stock limit reached');
+        // Calculate quantity already in cart for this item
+        $qtyInCart = isset($cart[$cartKey]) ? $cart[$cartKey]['quantity'] : 0;
+        $totalQtyNeeded = $qtyInCart + $requestedQty;
+
+        // Check if total quantity exceeds available stock
+        if ($totalQtyNeeded > $availableStock) {
+            $remaining = $availableStock - $qtyInCart;
+            if ($remaining <= 0) {
+                return redirect()->back()->with('error', "No more stock available for {$stockLabel}. You already have the maximum quantity in your cart.");
             }
-            
-            $cart[$cartKey]['quantity'] = $newQuantity;
+            return redirect()->back()->with('error', "Only {$remaining} more available for {$stockLabel}. You already have {$qtyInCart} in your cart.");
+        }
+
+        // Check if enough stock is available for the requested quantity
+        if ($availableStock < $requestedQty) {
+            return redirect()->back()->with('error', "Not enough stock available for {$stockLabel}. Only {$availableStock} available.");
+        }
+
+        if (isset($cart[$cartKey])) {
+            // Item already in cart, increase quantity
+            $cart[$cartKey]['quantity'] = $totalQtyNeeded;
         } else {
+            // Add new item to cart
             $cart[$cartKey] = [
                 'product_id' => $product->id,
                 'name' => $product->name,
                 'price' => (float)$product->price,
-                'quantity' => $validated['quantity'],
-                'stock_option_id' => null,
-                'stock_label' => 'One Size',
+                'quantity' => $requestedQty,
+                'stock_option_id' => $stockOptionId,
+                'stock_label' => $stockLabel,
                 'image' => $product->image,
+                'max_stock' => $availableStock, // Store max stock for validation
             ];
         }
 
         session()->put('cart', $cart);
         return redirect()->back()->with('success', 'Product added to cart!');
     }
+
+    // Handle legacy total stock products
+    $availableStock = $product->total_stock;
+    $cartKey = $id . '-default';
+    $cart = session()->get('cart', []);
+
+    // Calculate quantity already in cart
+    $qtyInCart = isset($cart[$cartKey]) ? $cart[$cartKey]['quantity'] : 0;
+    $totalQtyNeeded = $qtyInCart + $requestedQty;
+
+    // Check if total quantity exceeds available stock
+    if ($totalQtyNeeded > $availableStock) {
+        $remaining = $availableStock - $qtyInCart;
+        if ($remaining <= 0) {
+            return redirect()->back()->with('error', 'No more stock available. You already have the maximum quantity in your cart.');
+        }
+        return redirect()->back()->with('error', "Only {$remaining} more available. You already have {$qtyInCart} in your cart.");
+    }
+
+    if ($availableStock < $requestedQty) {
+        return redirect()->back()->with('error', "Not enough stock available. Only {$availableStock} available.");
+    }
+
+    if (isset($cart[$cartKey])) {
+        $cart[$cartKey]['quantity'] = $totalQtyNeeded;
+    } else {
+        $cart[$cartKey] = [
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'price' => (float)$product->price,
+            'quantity' => $requestedQty,
+            'stock_option_id' => null,
+            'stock_label' => 'One Size',
+            'image' => $product->image,
+            'max_stock' => $availableStock, // Store max stock
+        ];
+    }
+
+    session()->put('cart', $cart);
+    return redirect()->back()->with('success', 'Product added to cart!');
+}
 
     public function update(Request $request, $cartKey)
     {
@@ -229,7 +246,7 @@ class CartController extends Controller
         $userId = auth()->id();
         $sessionId = session()->getId();
 
-        if (!$discount->canBeUsedBy($userId, $sessionId)) {
+        if (!$discount->canBeUsedBy($userId)) {
             return back()->with('error', 'You have already used this discount code the maximum number of times.');
         }
 

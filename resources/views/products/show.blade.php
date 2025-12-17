@@ -3,350 +3,460 @@
 @section('title', $product->name . ' — HoodLuxe')
 
 @section('content')
-<section class="pt-32 pb-24 px-6 bg-gradient-to-b from-black via-neutral-950 to-neutral-900 min-h-screen">
-    <div class="max-w-7xl mx-auto">
-        
-        <!-- Back Navigation -->
-        <div class="mb-8">
-            <a href="{{ route('products.index') }}" 
-               class="inline-flex items-center gap-2 text-gray-400 hover:text-yellow-400 transition-colors duration-300 group">
-                <x-heroicon-o-arrow-left class="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> 
-                <span>Back to Collection</span>
-            </a>
-        </div>
+<section class="pt-24 pb-16 min-h-screen" style="background: var(--background-color);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <a href="{{ route('products.index') }}" 
+           class="inline-flex items-center gap-2 mb-6 text-theme-text hover:text-theme-primary transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to collection
+        </a>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            
+            <!-- Desktop Thumbnails - Scrollable Column -->
+            <div class="hidden lg:block lg:col-span-1">
+                <div class="sticky top-28">
+                    <div class="space-y-3 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
+                        @php
+                            $images = $product->images->count() ? $product->images : collect();
+                            if($images->isEmpty() && $product->image) {
+                                $images = collect([(object)['image_url' => asset('storage/' . $product->image), 'id' => 0]]);
+                            }
+                        @endphp
 
-            <!-- Product Image -->
-            <div class="relative overflow-hidden rounded-2xl border border-neutral-800 group hover:border-yellow-400 hover:shadow-[0_0_30px_rgba(250,204,21,0.2)] transition-all duration-500">
-                @if($product->image)
-                    <img src="{{ asset('storage/' . $product->image) }}" 
-                         alt="{{ $product->name }}"
-                         class="w-full h-[500px] lg:h-[800px] object-cover transition-transform duration-700 group-hover:scale-105">
-                @else
-                    <div class="w-full h-[500px] lg:h-[800px] bg-neutral-900 flex items-center justify-center">
-                        <x-heroicon-o-photo class="w-24 h-24 text-gray-700" />
+                        @foreach($images as $idx => $img)
+                            <button type="button" 
+                                    data-index="{{ $idx }}" 
+                                    class="thumb-btn w-full aspect-square  overflow-hidden border-2 transition-all duration-300 {{ $idx == 0 ? 'border-theme-primary' : 'border-transparent' }} hover:border-theme-primary"
+                                    style="background: color-mix(in srgb, var(--primary-color) 5%, transparent);">
+                                <img src="{{ $img->image_url }}" 
+                                     alt="thumb {{ $idx + 1 }}" 
+                                     class="w-full h-full object-cover">
+                            </button>
+                        @endforeach
                     </div>
-                @endif
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                </div>
             </div>
 
-            <!-- Product Details -->
-            <div class="flex flex-col space-y-8">
-                
-                <!-- Product Header -->
-                <div class="space-y-4">
-                    <h1 class="text-4xl lg:text-5xl xl:text-6xl font-light text-white leading-tight tracking-wide">
-                        {{ $product->name }}
-                    </h1>
-                    <p class="text-gray-400 text-lg leading-relaxed">
-                        {{ $product->description }}
-                    </p>
-                </div>
-
-                <!-- Price -->
-                <div class="py-6 border-y border-neutral-800">
-                    <div class="flex items-baseline gap-3">
-                        <span class="text-yellow-400 text-4xl lg:text-5xl font-semibold">
-                            {{ number_format($product->price, 0) }} DA
-                        </span>
-                        <span class="text-gray-500 text-sm">incl. taxes</span>
-                    </div>
-                </div>
-
-                @if($product->usesDynamicStock())
-                    @php
-                        $stockOptions = $product->getAvailableStockOptions();
-                        $displayType = $product->stockType->display_type;
-                    @endphp
-
-                    @if($displayType !== 'none')
-                    <!-- Dynamic Stock Options Selection -->
-                    <div>
-                        <label class="block text-white text-sm font-medium mb-4 tracking-wide uppercase">
-                            Select {{ $product->stockType->name }}
-                        </label>
-
-                        @if($displayType === 'grid')
-                            <!-- Grid Display (for sizes) -->
-                            <div class="flex flex-wrap gap-3">
-                                @foreach($stockOptions as $option)
-                                    <button type="button"
-                                            data-option-id="{{ $option['id'] }}"
-                                            data-stock="{{ $option['quantity'] }}"
-                                            data-label="{{ $option['label'] }}"
-                                            class="stock-option-btn px-6 py-3 rounded-lg border {{ $option['in_stock'] ? 'border-neutral-700 text-gray-300 hover:bg-yellow-400 hover:text-black hover:border-yellow-400' : 'border-neutral-800 text-gray-600 cursor-not-allowed' }} font-medium transition-all duration-300 min-w-[60px] relative"
-                                            {{ !$option['in_stock'] ? 'disabled' : '' }}>
-                                        {{ $option['label'] }}
-                                        @if(!$option['in_stock'])
-                                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                                        @endif
-                                    </button>
-                                @endforeach
-                            </div>
-
-                        @elseif($displayType === 'dropdown')
-                            <!-- Dropdown Display -->
-                            <select id="stock-option-select"
-                                    class="w-full bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-gray-200 
-                                           focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                                <option value="">Select an option</option>
-                                @foreach($stockOptions as $option)
-                                    <option value="{{ $option['id'] }}" 
-                                            data-stock="{{ $option['quantity'] }}"
-                                            data-label="{{ $option['label'] }}"
-                                            {{ !$option['in_stock'] ? 'disabled' : '' }}>
-                                        {{ $option['label'] }} {{ $option['in_stock'] ? "({$option['quantity']} available)" : '(Out of stock)' }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                        @elseif($displayType === 'color-swatch')
-                            <!-- Color Swatch Display -->
-                            <div class="flex flex-wrap gap-3">
-                                @foreach($stockOptions as $option)
-                                    <button type="button"
-                                            data-option-id="{{ $option['id'] }}"
-                                            data-stock="{{ $option['quantity'] }}"
-                                            data-label="{{ $option['label'] }}"
-                                            class="stock-option-btn w-12 h-12 rounded-full border-2 {{ $option['in_stock'] ? 'border-neutral-700 hover:border-yellow-400' : 'border-neutral-800 cursor-not-allowed opacity-50' }} transition-all duration-300 relative"
-                                            style="background-color: {{ $option['value'] ?? '#ccc' }}"
-                                            title="{{ $option['label'] }}"
-                                            {{ !$option['in_stock'] ? 'disabled' : '' }}>
-                                        @if(!$option['in_stock'])
-                                            <span class="absolute inset-0 flex items-center justify-center">
-                                                <span class="w-10 h-0.5 bg-red-500 rotate-45"></span>
-                                            </span>
-                                        @endif
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
-
-                        <p id="option-error" class="text-red-400 text-sm mt-2 hidden">
-                            Please select an option
-                        </p>
-                    </div>
+            <!-- Main Image Gallery -->
+            <div class="lg:col-span-7 space-y-4">
+                <!-- Main Image Container -->
+                <div class="w-full  overflow-hidden aspect-square relative" 
+                     id="imageContainer"
+                     style="background: color-mix(in srgb, var(--primary-color) 3%, transparent);">
+                    @if($images->isNotEmpty())
+                        <img id="mainImage" 
+                             src="{{ $images->first()->image_url }}" 
+                             alt="{{ $product->name }}" 
+                             class="w-full h-full object-cover transition-opacity duration-300">
+                    @else
+                        <div class="w-full h-full flex items-center justify-center"
+                             style="color: color-mix(in srgb, var(--text-color) 30%, transparent);">
+                            <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
                     @endif
-                @endif
 
-                <!-- Quantity Selection -->
-                <div>
-                    <label class="block text-white text-sm font-medium mb-4 tracking-wide uppercase">
-                        Quantity
-                    </label>
-                    <div class="flex items-center border border-neutral-700 rounded-lg overflow-hidden w-fit bg-neutral-900">
-                        <button type="button" onclick="decreaseQty()" 
-                                class="px-5 py-3 text-gray-300 hover:bg-yellow-400 hover:text-black transition-colors duration-300">
-                            <x-heroicon-o-minus class="w-5 h-5" />
+                    <!-- Image Navigation Arrows -->
+                    @if($images->count() > 1)
+                        <button type="button" 
+                                onclick="navigateImage(-1)"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full backdrop-blur-md transition-all duration-300 hover:scale-110 z-20"
+                                style="background: color-mix(in srgb, var(--background-color) 80%, transparent); color: var(--text-color);">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
                         </button>
-                        <input id="quantity" 
-                               name="quantity" 
-                               type="number" 
-                               value="1" 
-                               min="1"
-                               max="1"
-                               class="w-20 text-center bg-neutral-900 text-white border-x border-neutral-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 appearance-none py-3 text-lg">
-                        <button type="button" onclick="increaseQty()" 
-                                class="px-5 py-3 text-gray-300 hover:bg-yellow-400 hover:text-black transition-colors duration-300">
-                            <x-heroicon-o-plus class="w-5 h-5" />
+                        <button type="button" 
+                                onclick="navigateImage(1)"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full backdrop-blur-md transition-all duration-300 hover:scale-110 z-20"
+                                style="background: color-mix(in srgb, var(--background-color) 80%, transparent); color: var(--text-color);">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
                         </button>
-                    </div>
-                    <p id="stock-info" class="text-gray-500 text-sm mt-2">
-                        @if($product->usesDynamicStock() && $product->stockType->display_type !== 'none')
-                            Please select an option first
-                        @else
-                            {{ $product->total_stock }} items available
-                        @endif
-                    </p>
+
+                        <!-- Image Counter -->
+                        <div class="absolute top-4 right-4 px-3 py-1.5  backdrop-blur-md text-sm font-medium z-20"
+                             style="background: color-mix(in srgb, var(--background-color) 80%, transparent); color: var(--text-color);">
+                            <span id="currentImageIndex">1</span> / {{ $images->count() }}
+                        </div>
+                    @endif
                 </div>
 
-                <!-- Add to Cart Button -->
-                <form action="{{ route('cart.add', $product->id) }}" method="POST" id="add-to-cart-form" class="pt-4">
+                <!-- Mobile Thumbnail Strip - OUTSIDE main image -->
+                @if($images->count() > 1)
+                    <div class="lg:hidden">
+                        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                            @foreach($images as $idx => $img)
+                                <button data-index="{{ $idx }}" 
+                                        class="mobile-thumb flex-shrink-0 w-16 sm:w-20 aspect-square  overflow-hidden border-2 transition-all duration-300 {{ $idx == 0 ? 'border-theme-primary' : 'border-transparent' }} hover:border-theme-primary"
+                                        style="background: color-mix(in srgb, var(--primary-color) 5%, transparent);">
+                                    <img src="{{ $img->image_url }}" 
+                                         alt="mobile thumb {{ $idx + 1 }}" 
+                                         class="w-full h-full object-cover">
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Product Info -->
+            <div class="lg:col-span-4 space-y-6">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-light text-theme-text tracking-tight">{{ $product->name }}</h1>
+                    @if($product->category)
+                        <p class="text-sm text-theme-secondary mt-2 uppercase tracking-wider">{{ $product->category->name }}</p>
+                    @endif
+                </div>
+
+                <div class="flex items-center gap-4 pb-4 border-b" 
+                     style="border-color: color-mix(in srgb, var(--primary-color) 10%, transparent);">
+                    <div class="text-2xl sm:text-3xl font-semibold text-theme-primary">{{ number_format($product->price, 0) }} DA</div>
+                    <div class="text-sm" 
+                         style="color: color-mix(in srgb, var(--text-color) 60%, transparent);">
+                        <span id="stockDisplay">{{ $product->total_stock }}</span> in stock
+                    </div>
+                </div>
+
+                <p class="text-theme-text leading-relaxed" style="opacity: 0.8;">
+                    {{ $product->description }}
+                </p>
+
+                <!-- Main Form -->
+                <form action="{{ route('cart.add', $product->id) }}" method="POST" id="cartForm" class="space-y-5">
                     @csrf
-                    <input type="hidden" name="quantity" id="cart-quantity" value="1">
-                    <input type="hidden" name="stock_option_id" id="selected-option-id" value="">
                     
-                    <button type="submit"
-                            {{ $product->total_stock == 0 ? 'disabled' : '' }}
-                            class="w-full flex items-center justify-center gap-3 {{ $product->total_stock > 0 ? 'bg-yellow-400 hover:bg-yellow-500' : 'bg-gray-700 cursor-not-allowed' }} text-black font-semibold py-4 px-8 rounded-lg transition-colors duration-300 text-lg group">
-                        <x-heroicon-o-shopping-cart class="w-6 h-6 group-hover:scale-110 transition-transform" />
-                        {{ $product->total_stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
+                    @if($product->usesDynamicStock())
+                        @php $options = $product->getAvailableStockOptions(); @endphp
+                        @if(count($options) && $product->stockType->display_type === 'grid')
+                            <div>
+                                <label class="text-sm text-theme-text font-medium block mb-3">Size</label>
+                                <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                    @foreach($options as $opt)
+                                        <button type="button" 
+                                                data-id="{{ $opt['id'] }}" 
+                                                data-stock="{{ $opt['quantity'] }}" 
+                                                onclick="selectOption(this, {{ $opt['quantity'] }})"
+                                                class="option-btn px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all duration-300 {{ $opt['in_stock'] ? 'hover:scale-105' : 'opacity-50 cursor-not-allowed' }}"
+                                                style="border-color: color-mix(in srgb, var(--primary-color) 20%, transparent); color: var(--text-color);"
+                                                {{ !$opt['in_stock'] ? 'disabled' : '' }}>
+                                            {{ $opt['label'] }}
+                                            <span class="block text-xs mt-1" 
+                                                  style="color: color-mix(in srgb, var(--text-color) 50%, transparent);">
+                                                {{ $opt['quantity'] }} left
+                                            </span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                                <input type="hidden" name="stock_option_id" id="optionHidden">
+                                <p id="optionMessage" class="text-sm text-red-500 hidden mt-2">Please select a size</p>
+                            </div>
+                        @endif
+                    @endif
+
+                    <div>
+                        <label class="text-sm text-theme-text font-medium block mb-3">Quantity</label>
+                        <div class="inline-flex items-center border-2 rounded-lg overflow-hidden"
+                             style="border-color: color-mix(in srgb, var(--primary-color) 20%, transparent);">
+                            <button type="button" 
+                                    onclick="changeQty(-1)" 
+                                    class="px-4 py-2 text-theme-text hover:bg-opacity-10 transition-colors"
+                                    style="background: color-mix(in srgb, var(--primary-color) 5%, transparent);">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                </svg>
+                            </button>
+                            <input id="qtyInput" 
+                                   name="quantity" 
+                                   type="number" 
+                                   value="1" 
+                                   min="1" 
+                                   max="{{ $product->total_stock }}" 
+                                   class="w-16 sm:w-20 text-center border-l border-r py-2 text-theme-text"
+                                   style="border-color: color-mix(in srgb, var(--primary-color) 20%, transparent); background: transparent;">
+                            <button type="button" 
+                                    onclick="changeQty(1)" 
+                                    class="px-4 py-2 text-theme-text hover:bg-opacity-10 transition-colors"
+                                    style="background: color-mix(in srgb, var(--primary-color) 5%, transparent);">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p id="stockError" class="text-sm text-red-500 hidden mt-2">Only <span id="maxStock"></span> available in stock</p>
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full rounded-full text-white py-4 font-semibold text-base transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5"
+                            style="background: var(--primary-color);"
+                            onmouseover="this.style.background='var(--secondary-color)'"
+                            onmouseout="this.style.background='var(--primary-color)'">
+                        Add to cart
                     </button>
                 </form>
 
-                <!-- Product Features -->
-                <div class="grid grid-cols-2 gap-4 pt-6 border-t border-neutral-800">
-                    <div class="flex items-start gap-3">
-                        <div class="p-2 bg-neutral-900 rounded-lg border border-neutral-800">
-                            <x-heroicon-o-truck class="w-5 h-5 text-yellow-400" />
-                        </div>
-                        <div>
-                            <p class="text-white text-sm font-medium">Free Shipping</p>
-                            <p class="text-gray-500 text-xs">On all orders</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <div class="p-2 bg-neutral-900 rounded-lg border border-neutral-800">
-                            <x-heroicon-o-arrow-path class="w-5 h-5 text-yellow-400" />
-                        </div>
-                        <div>
-                            <p class="text-white text-sm font-medium">Easy Returns</p>
-                            <p class="text-gray-500 text-xs">30-day policy</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <div class="p-2 bg-neutral-900 rounded-lg border border-neutral-800">
-                            <x-heroicon-o-shield-check class="w-5 h-5 text-yellow-400" />
-                        </div>
-                        <div>
-                            <p class="text-white text-sm font-medium">Premium Quality</p>
-                            <p class="text-gray-500 text-xs">Guaranteed</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <div class="p-2 bg-neutral-900 rounded-lg border border-neutral-800">
-                            <x-heroicon-o-credit-card class="w-5 h-5 text-yellow-400" />
-                        </div>
-                        <div>
-                            <p class="text-white text-sm font-medium">Secure Payment</p>
-                            <p class="text-gray-500 text-xs">Protected</p>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Features -->
+                            
             </div>
         </div>
     </div>
 </section>
 
-<script>
-const usesDynamicStock = {{ $product->usesDynamicStock() ? 'true' : 'false' }};
-const displayType = '{{ $product->usesDynamicStock() ? $product->stockType->display_type : 'none' }}';
-let selectedOptionId = null;
-let selectedStock = 0;
-let selectedLabel = '';
+<!-- Related Products Section -->
+@if(isset($relatedProducts) && $relatedProducts->count() > 0)
+<section class="py-16 px-4 sm:px-6" 
+         style="background: color-mix(in srgb, var(--primary-color) 2%, var(--background-color));">
+    <div class="max-w-7xl mx-auto">
+        <h2 class="text-2xl sm:text-3xl font-light text-theme-text mb-8">You May Also Like</h2>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            @foreach($relatedProducts as $relatedProduct)
+                <a href="{{ route('products.show', $relatedProduct->id) }}" class="group block">
+                    <div class="relative overflow-hidden mb-3 transition-transform duration-300 group-hover:scale-105"
+                         style="background: color-mix(in srgb, var(--primary-color) 5%, transparent);">
+                        @if($relatedProduct->primary_image_url)
+                            <img src="{{ $relatedProduct->primary_image_url }}"
+                                 alt="{{ $relatedProduct->name }}"
+                                 class="w-full aspect-[3/4] object-cover">
+                        @else
+                            <div class="w-full aspect-[3/4] flex items-center justify-center"
+                                 style="color: color-mix(in srgb, var(--text-color) 30%, transparent);">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                        @endif
 
-// For "One Size" products with dynamic stock
-@if($product->usesDynamicStock() && $product->stockType->display_type === 'none')
-    selectedOptionId = {{ $stockOptions->first()['id'] ?? 'null' }};
-    selectedStock = {{ $stockOptions->first()['quantity'] ?? 0 }};
-    selectedLabel = '{{ $stockOptions->first()['label'] ?? '' }}';
-    document.getElementById('selected-option-id').value = selectedOptionId;
-    document.getElementById('quantity').max = selectedStock;
+                        @if(!$relatedProduct->isInStock())
+                            <span class="absolute top-2 left-2 px-2 py-1 bg-red-600 text-white text-xs font-medium ">
+                                Sold Out
+                            </span>
+                        @endif
+                    </div>
+
+                    <h3 class="text-sm font-medium text-theme-text group-hover:text-theme-primary transition-colors mb-1">
+                        {{ $relatedProduct->name }}
+                    </h3>
+                    <p class="text-theme-primary font-semibold">{{ number_format($relatedProduct->price, 0) }} DA</p>
+                </a>
+            @endforeach
+        </div>
+    </div>
+</section>
 @endif
 
-function decreaseQty() {
-    const input = document.getElementById('quantity');
-    const cartInput = document.getElementById('cart-quantity');
-    if (parseInt(input.value) > 1) {
-        input.value = parseInt(input.value) - 1;
-        cartInput.value = input.value;
+<style>
+    /* Custom Scrollbar Styling */
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
     }
-}
 
-function increaseQty() {
-    const input = document.getElementById('quantity');
-    const cartInput = document.getElementById('cart-quantity');
-    const max = parseInt(input.max);
-    
-    if (usesDynamicStock && displayType !== 'none' && !selectedOptionId) {
-        alert('Please select an option first');
-        return;
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+        border-radius: 10px;
     }
-    
-    if (parseInt(input.value) < max) {
-        input.value = parseInt(input.value) + 1;
-        cartInput.value = input.value;
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 10px;
     }
-}
 
-document.getElementById('quantity').addEventListener('change', function() {
-    const max = parseInt(this.max);
-    if (parseInt(this.value) > max) this.value = max;
-    if (parseInt(this.value) < 1) this.value = 1;
-    document.getElementById('cart-quantity').value = this.value;
-});
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: var(--secondary-color);
+    }
 
-// Handle option selection (buttons)
-if (displayType === 'grid' || displayType === 'color-swatch') {
-    document.querySelectorAll('.stock-option-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.disabled) return;
+    /* Firefox scrollbar */
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-color) transparent;
+    }
 
-            document.querySelectorAll('.stock-option-btn').forEach(b => {
-                b.classList.remove('bg-yellow-400', 'text-black', 'border-yellow-400', 'ring-2', 'ring-yellow-400');
-            });
-            
-            this.classList.add('bg-yellow-400', 'text-black', 'border-yellow-400');
+    /* Smooth transitions for theme changes */
+    .text-theme-text,
+    .text-theme-primary,
+    .text-theme-secondary,
+    button,
+    input {
+        transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+    }
 
-            selectedOptionId = this.dataset.optionId;
-            selectedStock = parseInt(this.dataset.stock);
-            selectedLabel = this.dataset.label;
+    /* Selected option style */
+    .option-btn.selected {
+        border-color: var(--primary-color) !important;
+        background: color-mix(in srgb, var(--primary-color) 10%, transparent) !important;
+    }
 
-            document.getElementById('selected-option-id').value = selectedOptionId;
+    /* Thumbnail active state */
+    .thumb-btn.active,
+    .mobile-thumb.active {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 1px var(--primary-color);
+    }
 
-            const quantityInput = document.getElementById('quantity');
-            quantityInput.max = selectedStock;
-            
-            if (parseInt(quantityInput.value) > selectedStock) {
-                quantityInput.value = 1;
-                document.getElementById('cart-quantity').value = 1;
+    /* Remove number input spinners */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+</style>
+
+<script>
+    // Image gallery
+    const images = @json($images->map(fn($i) => $i->image_url)->values());
+    let current = 0;
+    const mainImage = document.getElementById('mainImage');
+    const currentIndexEl = document.getElementById('currentImageIndex');
+
+    function setMain(idx) {
+        if (!images[idx]) return;
+        current = idx;
+        mainImage.style.opacity = 0;
+        setTimeout(() => {
+            mainImage.src = images[idx];
+            mainImage.style.opacity = 1;
+        }, 150);
+
+        // Update counter
+        if(currentIndexEl) {
+            currentIndexEl.textContent = idx + 1;
+        }
+
+        // Update thumbnails
+        document.querySelectorAll('.thumb-btn, .mobile-thumb').forEach((el, i) => {
+            if (i === idx) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
             }
-
-            const stockInfo = document.getElementById('stock-info');
-            stockInfo.textContent = `${selectedStock} items available (${selectedLabel})`;
-            stockInfo.classList.remove('text-red-400');
-            stockInfo.classList.add('text-gray-500');
-
-            document.getElementById('option-error').classList.add('hidden');
         });
-    });
-}
 
-// Handle dropdown selection
-if (displayType === 'dropdown') {
-    document.getElementById('stock-option-select').addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        
-        if (!selectedOption.value) return;
-
-        selectedOptionId = selectedOption.value;
-        selectedStock = parseInt(selectedOption.dataset.stock);
-        selectedLabel = selectedOption.dataset.label;
-
-        document.getElementById('selected-option-id').value = selectedOptionId;
-
-        const quantityInput = document.getElementById('quantity');
-        quantityInput.max = selectedStock;
-        
-        if (parseInt(quantityInput.value) > selectedStock) {
-            quantityInput.value = 1;
-            document.getElementById('cart-quantity').value = 1;
+        // Scroll desktop thumbnail into view
+        const desktopThumb = document.querySelectorAll('.thumb-btn')[idx];
+        if (desktopThumb) {
+            desktopThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        const stockInfo = document.getElementById('stock-info');
-        stockInfo.textContent = `${selectedStock} items available (${selectedLabel})`;
-
-        document.getElementById('option-error').classList.add('hidden');
-    });
-}
-
-// Form submission validation
-document.getElementById('add-to-cart-form').addEventListener('submit', function(e) {
-    if (usesDynamicStock && displayType !== 'none') {
-        if (!selectedOptionId) {
-            e.preventDefault();
-            document.getElementById('option-error').classList.remove('hidden');
-            return false;
-        }
-
-        if (selectedStock === 0) {
-            e.preventDefault();
-            alert('This option is out of stock. Please select another option.');
-            return false;
+        // Scroll mobile thumbnail into view
+        const mobileThumb = document.querySelectorAll('.mobile-thumb')[idx];
+        if (mobileThumb) {
+            mobileThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
     }
-});
+
+    function navigateImage(direction) {
+        const newIndex = (current + direction + images.length) % images.length;
+        setMain(newIndex);
+    }
+
+    // Thumbnail clicks
+    document.querySelectorAll('.thumb-btn, .mobile-thumb').forEach(el => {
+        el.addEventListener('click', () => setMain(parseInt(el.dataset.index)));
+    });
+
+    // Touch swipe for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const imageContainer = document.getElementById('imageContainer');
+
+    imageContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    imageContainer.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        if (touchEndX < touchStartX - 50) navigateImage(1); // Swipe left
+        if (touchEndX > touchStartX + 50) navigateImage(-1); // Swipe right
+    }
+
+    // Stock management
+    let maxStock = {{ $product->total_stock }};
+    let selectedStock = maxStock;
+    let selectedOption = null;
+
+    function updateStockDisplay() {
+        document.getElementById('stockDisplay').textContent = selectedStock;
+    }
+
+    // Main form option selection
+    function selectOption(btn, stock) {
+        if (btn.disabled) return;
+        
+        document.querySelectorAll('.option-btn').forEach(b => {
+            b.classList.remove('selected');
+        });
+        btn.classList.add('selected');
+        
+        selectedOption = btn.dataset.id;
+        selectedStock = stock;
+        document.getElementById('optionHidden').value = selectedOption;
+        document.getElementById('optionMessage').classList.add('hidden');
+        document.getElementById('qtyInput').max = stock;
+        
+        const qtyInput = document.getElementById('qtyInput');
+        if (parseInt(qtyInput.value) > stock) {
+            qtyInput.value = stock;
+        }
+        
+        updateStockDisplay();
+    }
+
+    function changeQty(delta) {
+        const input = document.getElementById('qtyInput');
+        const currentMax = selectedOption ? selectedStock : maxStock;
+        const newVal = Math.max(1, Math.min(currentMax, parseInt(input.value) + delta));
+        input.value = newVal;
+        validateStock();
+    }
+
+    function validateStock() {
+        const input = document.getElementById('qtyInput');
+        const qty = parseInt(input.value);
+        const currentMax = selectedOption ? selectedStock : maxStock;
+        const errorEl = document.getElementById('stockError');
+        const maxStockEl = document.getElementById('maxStock');
+
+        if (qty > currentMax) {
+            input.value = currentMax;
+            errorEl.classList.remove('hidden');
+            maxStockEl.textContent = currentMax;
+            setTimeout(() => errorEl.classList.add('hidden'), 3000);
+        } else {
+            errorEl.classList.add('hidden');
+        }
+    }
+
+    document.getElementById('qtyInput').addEventListener('input', validateStock);
+
+    // Main form validation
+    document.getElementById('cartForm').addEventListener('submit', function(e) {
+        @if($product->usesDynamicStock())
+            if (!selectedOption) {
+                e.preventDefault();
+                document.getElementById('optionMessage').classList.remove('hidden');
+                return false;
+            }
+        @endif
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') navigateImage(-1);
+        if (e.key === 'ArrowRight') navigateImage(1);
+    });
 </script>
 @endsection

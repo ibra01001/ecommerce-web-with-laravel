@@ -24,7 +24,7 @@ class AdminStockTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'display_type' => 'required|in:grid,dropdown,color-swatch,none',
+            'display_type' => 'required|in:grid,none',
             'sort_order' => 'nullable|integer|min:0',
         ]);
 
@@ -52,7 +52,7 @@ class AdminStockTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'display_type' => 'required|in:grid,dropdown,color-swatch,none',
+            'display_type' => 'required|in:grid,none',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ]);
