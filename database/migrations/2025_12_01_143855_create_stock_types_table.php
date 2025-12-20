@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('stock_types', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('display_type', ['grid', 'dropdown', 'color-swatch', 'none'])->default('grid');
+            $table->enum('display_type', ['grid', 'dropdown', 'variants product', 'none'])->default('grid');
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();

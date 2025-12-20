@@ -209,7 +209,7 @@
                         1
                     </div>
                     <h4 class="font-medium" style="color: var(--text-color);">Order Confirmation</h4>
-                    <p class="text-sm font-light" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">You'll receive a confirmation email shortly</p>
+                    <p class="text-sm font-light" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">You'll receive a confirmation call shortly</p>
                 </div>
                 <div class="text-center space-y-3">
                     <div class="w-16 h-16 mx-auto text-white rounded-full flex items-center justify-center text-2xl font-semibold"
@@ -225,7 +225,7 @@
                         3
                     </div>
                     <h4 class="font-medium" style="color: var(--text-color);">Delivery</h4>
-                    <p class="text-sm font-light" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">Track your order until it reaches you</p>
+                    <p class="text-sm font-light" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">Your order will be delivered to you</p>
                 </div>
             </div>
         </div>

@@ -47,22 +47,22 @@
             </h3>
 
             <div>
-                <label class="block text-slate-700 font-medium mb-2">Feature Title *</label>
+                <label class="block text-slate-700 font-medium mb-2">Feature Title </label>
                 <input type="text" name="title" 
                        value="{{ old('title', $item->title) }}"
                        class="w-full bg-white border-2 border-slate-200 rounded-full px-4 py-3 text-slate-900
                               focus:outline-none focus:border-slate-900 transition-all duration-300"
                        placeholder="e.g., Free Shipping"
-                       required>
+                       >
             </div>
 
             <div>
-                <label class="block text-slate-700 font-medium mb-2">Description *</label>
+                <label class="block text-slate-700 font-medium mb-2">Description</label>
                 <textarea name="description" rows="3"
                           class="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-slate-900
                                  focus:outline-none focus:border-slate-900 transition-all duration-300 resize-none"
                           placeholder="Brief description of this feature..."
-                          required>{{ old('description', $item->description) }}</textarea>
+                          >{{ old('description', $item->description) }}</textarea>
             </div>
 
             <div>

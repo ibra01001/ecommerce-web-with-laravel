@@ -100,7 +100,7 @@ class CheckoutController extends Controller
             $discount = session('discount', []);
             $discount_amount = $discount['amount'] ?? 0;
             $coupon_code = $discount['code'] ?? null;
-            $discount_id = $discount['id'] ?? null;
+            $discount_id = $discount['discount_id'] ?? null;
 
             // Validate discount one more time before creating order
             if ($discount_id) {

@@ -35,7 +35,7 @@ class AdminFeaturesController extends Controller
     public function updateFeatures(Request $request)
     {
         $validated = $request->validate([
-            'section_title' => 'required|string|max:255',
+            'section_title' => 'nullable|string|max:255',
             'section_description' => 'nullable|string',
             'layout_style' => 'required|in:grid,carousel,list',
             'columns' => 'required|in:2,3,4',
@@ -83,8 +83,8 @@ class AdminFeaturesController extends Controller
     public function storeItem(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
             'icon_type' => 'required|in:svg,svg_upload,image,emoji',
             'icon_svg' => 'required_if:icon_type,svg',
             'icon_svg_file' => 'required_if:icon_type,svg_upload|nullable|file|mimes:svg|max:2048',
@@ -150,8 +150,8 @@ class AdminFeaturesController extends Controller
     public function updateItem(Request $request, FeatureItem $item)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
             'icon_type' => 'required|in:svg,svg_upload,image,emoji',
             'icon_svg' => 'required_if:icon_type,svg',
             'icon_svg_file' => 'nullable|file|mimes:svg|max:2048',

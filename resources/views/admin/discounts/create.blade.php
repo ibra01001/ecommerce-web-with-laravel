@@ -205,37 +205,53 @@
         <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4">
             <label class="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" name="applies_to_all" value="1" id="applies-to-all"
-                       {{ old('applies_to_all', true) ? 'checked' : '' }}
+                       {{ old('applies_to_all', false) ? 'checked' : '' }}
                        class="w-5 h-5 text-slate-900 border-2 border-slate-300 rounded focus:ring-2 focus:ring-slate-900">
                 <span class="text-slate-900 font-medium">Apply to all products</span>
             </label>
         </div>
 
-        <div id="specific-items" class="{{ old('applies_to_all', true) ? 'hidden' : '' }} space-y-6">
+        <div id="specific-items" class="{{ old('applies_to_all', false) ? 'hidden' : '' }} space-y-6">
             <!-- Specific Categories -->
             <div>
                 <label class="block text-slate-700 font-medium mb-3">Specific Categories</label>
-                <select name="category_ids[]" multiple
+                <select name="category_ids[]" id="category-select" multiple
                         class="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-slate-900 font-light
                                focus:outline-none focus:border-slate-900 transition-all duration-300" size="5">
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" class="py-2">{{ $category->name }}</option>
+                        <option value="{{ $category->id }}" 
+                                {{ (is_array(old('category_ids')) && in_array($category->id, old('category_ids'))) ? 'selected' : '' }}
+                                class="py-2">{{ $category->name }}</option>
                     @endforeach
                 </select>
                 <p class="mt-2 text-sm text-slate-500 font-light">Hold Ctrl/Cmd to select multiple</p>
+                @error('category_ids') <p class="text-red-600 text-sm mt-2 font-medium">{{ $message }}</p> @enderror
             </div>
 
             <!-- Specific Products -->
             <div>
                 <label class="block text-slate-700 font-medium mb-3">Specific Products</label>
-                <select name="product_ids[]" multiple
+                <select name="product_ids[]" id="product-select" multiple
                         class="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 text-slate-900 font-light
                                focus:outline-none focus:border-slate-900 transition-all duration-300" size="5">
                     @foreach($products as $product)
-                        <option value="{{ $product->id }}" class="py-2">{{ $product->name }} ({{ $product->category->name }})</option>
+                        <option value="{{ $product->id }}"
+                                {{ (is_array(old('product_ids')) && in_array($product->id, old('product_ids'))) ? 'selected' : '' }}
+                                class="py-2">{{ $product->name }} ({{ $product->category->name }})</option>
                     @endforeach
                 </select>
                 <p class="mt-2 text-sm text-slate-500 font-light">Hold Ctrl/Cmd to select multiple</p>
+                @error('product_ids') <p class="text-red-600 text-sm mt-2 font-medium">{{ $message }}</p> @enderror
+            </div>
+
+            <!-- Validation Warning -->
+            <div id="selection-warning" class="hidden bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4">
+                <p class="text-yellow-800 text-sm font-medium flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    Please select at least one category or product
+                </p>
             </div>
         </div>
     </div>
@@ -274,6 +290,7 @@
 </form>
 
 <script>
+// Handle discount type change
 document.getElementById('discount-type').addEventListener('change', function() {
     const maxDiscountContainer = document.getElementById('max-discount-container');
     const valueHint = document.getElementById('value-hint');
@@ -287,9 +304,60 @@ document.getElementById('discount-type').addEventListener('change', function() {
     }
 });
 
-document.getElementById('applies-to-all').addEventListener('change', function() {
-    const specificItems = document.getElementById('specific-items');
-    specificItems.classList.toggle('hidden', this.checked);
+// FIXED: Handle applies-to-all checkbox
+const appliesToAllCheckbox = document.getElementById('applies-to-all');
+const specificItems = document.getElementById('specific-items');
+const categorySelect = document.getElementById('category-select');
+const productSelect = document.getElementById('product-select');
+const selectionWarning = document.getElementById('selection-warning');
+
+appliesToAllCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+        // Hide specific items section
+        specificItems.classList.add('hidden');
+        selectionWarning.classList.add('hidden');
+        
+        // Clear selections (important!)
+        Array.from(categorySelect.options).forEach(opt => opt.selected = false);
+        Array.from(productSelect.options).forEach(opt => opt.selected = false);
+    } else {
+        // Show specific items section
+        specificItems.classList.remove('hidden');
+    }
 });
+
+// FIXED: Validate that at least one category or product is selected
+function validateSelection() {
+    if (appliesToAllCheckbox.checked) {
+        selectionWarning.classList.add('hidden');
+        return true;
+    }
+    
+    const hasCategories = Array.from(categorySelect.selectedOptions).length > 0;
+    const hasProducts = Array.from(productSelect.selectedOptions).length > 0;
+    
+    if (!hasCategories && !hasProducts) {
+        selectionWarning.classList.remove('hidden');
+        return false;
+    }
+    
+    selectionWarning.classList.add('hidden');
+    return true;
+}
+
+// Show warning when user deselects everything
+categorySelect.addEventListener('change', validateSelection);
+productSelect.addEventListener('change', validateSelection);
+
+// Validate on form submit
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!validateSelection()) {
+        e.preventDefault();
+        specificItems.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+
+// Initialize max discount visibility
+document.getElementById('discount-type').dispatchEvent(new Event('change'));
 </script>
 @endsection

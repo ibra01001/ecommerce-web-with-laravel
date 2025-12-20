@@ -30,8 +30,8 @@ return new class extends Migration
         Schema::create('feature_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('features_section_id')->constrained()->onDelete('cascade');
-            $table->string('title');
-            $table->text('description');
+            $table->string('title')->nullable();
+            $table->text('description')->nullable();
             
             // Icon options
             $table->enum('icon_type', ['svg', 'svg_upload', 'image', 'emoji'])->default('svg');

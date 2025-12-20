@@ -35,7 +35,8 @@
 │   │   │   ├── NewsletterController.php
 │   │   │   ├── ProductController.php
 │   │   │   ├── ProfileController.php
-│   │   │   └── ShippingController.php
+│   │   │   ├── ShippingController.php
+│   │   │   └── ThemeController.php
 │   │   ├── Middleware
 │   │   │   └── IsAdmin.php
 │   │   └── Requests
@@ -79,7 +80,6 @@
 ├── bootstrap
 │   ├── app.php
 │   ├── cache
-│   │   ├── config.php
 │   │   ├── .gitignore
 │   │   ├── packages.php
 │   │   └── services.php
@@ -92,6 +92,7 @@
 │   ├── cache.php
 │   ├── database.php
 │   ├── filesystems.php
+│   ├── fonts.php
 │   ├── logging.php
 │   ├── mail.php
 │   ├── queue.php
@@ -129,7 +130,7 @@
 │   │   ├── 2025_12_14_000000_custom_footer.php
 │   │   ├── 2025_12_14_164927_create_features_sections_table.php
 │   │   ├── 2025_12_15_114442_create_newsletter_subscribers_table.php
-│   │   └── 2025_12_15_150113_create_themes_table.php
+│   │   └── 2025_12_17_195626_create_themes_table.php
 │   └── seeders
 │       ├── AdminUserSeeder.php
 │       ├── CommunesSeeder.php
@@ -237,10 +238,11 @@
 │       │   ├── modal.blade.php
 │       │   ├── nav-link.blade.php
 │       │   ├── primary-button.blade.php
-│       │   ├── quick-buy-modal.php
+│       │   ├── quick-buy-modal.blade.php
 │       │   ├── responsive-nav-link.blade.php
 │       │   ├── secondary-button.blade.php
-│       │   └── text-input.blade.php
+│       │   ├── text-input.blade.php
+│       │   └── theme-styles.blade.php
 │       ├── home.blade.php
 │       ├── layouts
 │       │   ├── app.blade.php
@@ -284,4 +286,4 @@
 │       └── ExampleTest.php
 └── vite.config.js
 
-59 directories, 226 files
+59 directories, 228 files

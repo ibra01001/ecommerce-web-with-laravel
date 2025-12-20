@@ -26,6 +26,13 @@ class CartComponent extends Component
     {
         $this->cart = session()->get('cart', []);
         $this->wilayas = Wilaya::orderBy('code')->get();
+        $this->wilaya_id = session()->get('wilaya_id');
+        
+        if ($this->wilaya_id) {
+            $wilaya = Wilaya::find($this->wilaya_id);
+            $this->shipping_cost = $wilaya?->shipping_cost ?? 0;
+        }
+        
         $this->loadDiscount();
         $this->calculateTotal();
         $this->updateCartCount();
@@ -36,7 +43,22 @@ class CartComponent extends Component
         $discount = session()->get('discount');
         if ($discount) {
             $this->discountCode = $discount['code'];
-            $this->discountAmount = $discount['amount'];
+            
+            // Recalculate discount amount to ensure it's still valid
+            $discountModel = Discount::where('code', $this->discountCode)
+                ->active()
+                ->first();
+            
+            if ($discountModel && $discountModel->isValid()) {
+                $cartForDiscount = $this->formatCartForDiscount();
+                $this->discountAmount = $discountModel->calculateDiscount($this->subtotal, $cartForDiscount);
+                
+                // Update session with recalculated amount
+                session()->put('discount.amount', $this->discountAmount);
+            } else {
+                // Discount is no longer valid, remove it
+                $this->removeDiscount();
+            }
         }
     }
 
@@ -60,7 +82,7 @@ class CartComponent extends Component
 
     public function getTotalProperty()
     {
-        return $this->subtotal - $this->discountAmount + $this->shipping_cost;
+        return max(0, $this->subtotal - $this->discountAmount + $this->shipping_cost);
     }
 
     public function updateCartCount()
@@ -68,96 +90,113 @@ class CartComponent extends Component
         $this->cartCount = collect($this->cart)->sum('quantity');
     }
 
-   public function increaseQuantity($id)
-{
-    if (isset($this->cart[$id])) {
-        $newQuantity = $this->cart[$id]['quantity'] + 1;
-        
-        // Validate stock
-        if (!$this->validateStock($id, $newQuantity)) {
-            return;
+    public function increaseQuantity($id)
+    {
+        if (isset($this->cart[$id])) {
+            $newQuantity = $this->cart[$id]['quantity'] + 1;
+            
+            // Validate stock
+            if (!$this->validateStock($id, $newQuantity)) {
+                return;
+            }
+            
+            $this->cart[$id]['quantity'] = $newQuantity;
+            session()->put('cart', $this->cart);
+            
+            // Recalculate discount if applied
+            $this->recalculateDiscount();
+            
+            $this->calculateTotal();
+            $this->updateCartCount();
+            $this->dispatch('updateCartCount');
+            $this->clearMessages();
         }
-        
-        $this->cart[$id]['quantity'] = $newQuantity;
-        session()->put('cart', $this->cart);
-        $this->calculateTotal();
-        $this->updateCartCount();
-        $this->dispatch('updateCartCount');
-        $this->clearMessages();
     }
-}
 
-public function decreaseQuantity($id)
-{
-    if (isset($this->cart[$id]) && $this->cart[$id]['quantity'] > 1) {
-        $this->cart[$id]['quantity']--;
-        session()->put('cart', $this->cart);
-        $this->calculateTotal();
-        $this->updateCartCount();
-        $this->dispatch('updateCartCount');
-        $this->clearMessages();
-    }
-}
-
-public function updateQuantity($id, $quantity)
-{
-    if (isset($this->cart[$id])) {
-        $quantity = max(1, (int) $quantity);
-        
-        // Validate stock
-        if (!$this->validateStock($id, $quantity)) {
-            // Reset to previous quantity
-            $this->render();
-            return;
+    public function decreaseQuantity($id)
+    {
+        if (isset($this->cart[$id]) && $this->cart[$id]['quantity'] > 1) {
+            $this->cart[$id]['quantity']--;
+            session()->put('cart', $this->cart);
+            
+            // Recalculate discount if applied
+            $this->recalculateDiscount();
+            
+            $this->calculateTotal();
+            $this->updateCartCount();
+            $this->dispatch('updateCartCount');
+            $this->clearMessages();
         }
-        
-        $this->cart[$id]['quantity'] = $quantity;
-        session()->put('cart', $this->cart);
-        $this->calculateTotal();
-        $this->updateCartCount();
-        $this->dispatch('updateCartCount');
-        $this->clearMessages();
-    }
-}
-
-private function validateStock($cartKey, $requestedQty)
-{
-    $item = $this->cart[$cartKey];
-    $product = \App\Models\Product::with(['stockType', 'stock.stockTypeOption'])->find($item['product_id']);
-    
-    if (!$product) {
-        $this->errorMessage = 'Product not found';
-        return false;
     }
 
-    $availableStock = 0;
-
-    // Check dynamic stock
-    if ($product->usesDynamicStock() && isset($item['stock_option_id'])) {
-        $productStock = \App\Models\ProductStock::where('product_id', $product->id)
-            ->where('stock_type_option_id', $item['stock_option_id'])
-            ->first();
-        
-        if ($productStock) {
-            $availableStock = $productStock->quantity;
+    public function updateQuantity($id, $quantity)
+    {
+        if (isset($this->cart[$id])) {
+            $quantity = max(1, (int) $quantity);
+            
+            // Validate stock
+            if (!$this->validateStock($id, $quantity)) {
+                // Reset to previous quantity
+                $this->render();
+                return;
+            }
+            
+            $this->cart[$id]['quantity'] = $quantity;
+            session()->put('cart', $this->cart);
+            
+            // Recalculate discount if applied
+            $this->recalculateDiscount();
+            
+            $this->calculateTotal();
+            $this->updateCartCount();
+            $this->dispatch('updateCartCount');
+            $this->clearMessages();
         }
-    } else {
-        // Legacy stock
-        $availableStock = $product->total_stock;
     }
 
-    if ($requestedQty > $availableStock) {
-        $this->errorMessage = "Only {$availableStock} available for {$item['stock_label']}";
-        return false;
+    private function validateStock($cartKey, $requestedQty)
+    {
+        $item = $this->cart[$cartKey];
+        $product = \App\Models\Product::with(['stockType', 'stock.stockTypeOption'])->find($item['product_id']);
+        
+        if (!$product) {
+            $this->errorMessage = 'Product not found';
+            return false;
+        }
+
+        $availableStock = 0;
+
+        // Check dynamic stock
+        if ($product->usesDynamicStock() && isset($item['stock_option_id'])) {
+            $productStock = \App\Models\ProductStock::where('product_id', $product->id)
+                ->where('stock_type_option_id', $item['stock_option_id'])
+                ->first();
+            
+            if ($productStock) {
+                $availableStock = $productStock->quantity;
+            }
+        } else {
+            // Legacy stock
+            $availableStock = $product->total_stock;
+        }
+
+        if ($requestedQty > $availableStock) {
+            $this->errorMessage = "Only {$availableStock} available for {$item['stock_label']}";
+            return false;
+        }
+
+        return true;
     }
 
-    return true;
-}
     public function removeItem($id)
     {
         if (isset($this->cart[$id])) {
             unset($this->cart[$id]);
             session()->put('cart', $this->cart);
+            
+            // Recalculate discount if applied
+            $this->recalculateDiscount();
+            
             $this->calculateTotal();
             $this->updateCartCount();
             $this->dispatch('updateCartCount');
@@ -172,6 +211,9 @@ private function validateStock($cartKey, $requestedQty)
         }
     }
 
+    /**
+     * FIXED: Apply discount using the Discount model's methods
+     */
     public function applyDiscount()
     {
         $this->clearMessages();
@@ -181,54 +223,139 @@ private function validateStock($cartKey, $requestedQty)
             return;
         }
 
-        $code = Discount::where('code', strtoupper($this->discountInput))
-            ->where('is_active', true)
+        // Find the discount using the active scope
+        $discount = Discount::where('code', strtoupper(trim($this->discountInput)))
+            ->active()
             ->first();
 
-        if (!$code) {
-            $this->errorMessage = 'Invalid discount code';
+        if (!$discount) {
+            $this->errorMessage = 'Invalid or expired discount code';
             $this->discountInput = '';
             return;
         }
 
-        // Check if code has expired
-        if ($code->expires_at && $code->expires_at < now()) {
-            $this->errorMessage = 'This discount code has expired';
+        // Check if discount is valid (additional validation)
+        if (!$discount->isValid()) {
+            $this->errorMessage = 'This discount code is not currently valid';
             $this->discountInput = '';
             return;
         }
 
-        // Check usage limit
-        if ($code->max_uses && $code->times_used >= $code->max_uses) {
-            $this->errorMessage = 'This discount code has reached its usage limit';
-            $this->discountInput = '';
-            return;
-        }
-
-        // Calculate discount
-        $subtotal = $this->subtotal;
+        // Check if user/session can use this discount
+        $userId = auth()->id();
+        $sessionId = session()->getId();
         
-        if ($code->type === 'percentage') {
-            $discountAmount = ($subtotal * $code->value) / 100;
-        } else {
-            $discountAmount = $code->value;
+        if (!$discount->canBeUsedBy($userId, $sessionId)) {
+            $this->errorMessage = 'You have reached the usage limit for this discount code';
+            $this->discountInput = '';
+            return;
         }
 
-        // Ensure discount doesn't exceed subtotal
-        $discountAmount = min($discountAmount, $subtotal);
+        // CRITICAL: Format cart for discount validation
+        $cartForDiscount = $this->formatCartForDiscount();
+
+        // Check if discount applies to cart items
+        if (!$discount->appliesTo($cartForDiscount)) {
+            $this->errorMessage = 'This discount code does not apply to any items in your cart';
+            $this->discountInput = '';
+            return;
+        }
+
+        // Get subtotal
+        $subtotal = $this->subtotal;
+
+        // Check minimum purchase requirement
+        if ($discount->min_purchase && $subtotal < $discount->min_purchase) {
+            $this->errorMessage = 'Minimum purchase of ' . number_format((float) $discount->min_purchase, 0) . ' DA required for this discount';
+            $this->discountInput = '';
+            return;
+        }
+
+        // Calculate discount amount using the model's method
+        $discountAmount = $discount->calculateDiscount($subtotal, $cartForDiscount);
+
+        if ($discountAmount <= 0) {
+            $this->errorMessage = 'This discount code cannot be applied to your cart';
+            $this->discountInput = '';
+            return;
+        }
 
         // Save to session
         session()->put('discount', [
-            'code' => $code->code,
+            'code' => $discount->code,
             'amount' => $discountAmount,
-            'discount_code_id' => $code->id,
+            'discount_id' => $discount->id,
         ]);
 
-        $this->discountCode = $code->code;
+        $this->discountCode = $discount->code;
         $this->discountAmount = $discountAmount;
         $this->discountInput = '';
-        $this->successMessage = 'Discount code applied successfully!';
+        $this->successMessage = 'Discount code applied successfully! You saved ' . number_format($discountAmount, 0) . ' DA';
         $this->calculateTotal();
+    }
+
+    /**
+     * Recalculate discount when cart changes
+     */
+    private function recalculateDiscount()
+    {
+        if (!$this->discountCode) {
+            return;
+        }
+
+        $discount = Discount::where('code', $this->discountCode)
+            ->active()
+            ->first();
+
+        if (!$discount || !$discount->isValid()) {
+            $this->removeDiscount();
+            return;
+        }
+
+        $cartForDiscount = $this->formatCartForDiscount();
+        $subtotal = $this->subtotal;
+        
+        // Check if discount still applies
+        if (!$discount->appliesTo($cartForDiscount)) {
+            $this->errorMessage = 'Discount no longer applies to cart items';
+            $this->removeDiscount();
+            return;
+        }
+
+        // Check minimum purchase
+        if ($discount->min_purchase && $subtotal < $discount->min_purchase) {
+            $this->errorMessage = 'Cart total is below minimum purchase requirement. Discount removed.';
+            $this->removeDiscount();
+            return;
+        }
+
+        // Recalculate discount amount
+        $this->discountAmount = $discount->calculateDiscount($subtotal, $cartForDiscount);
+        
+        if ($this->discountAmount <= 0) {
+            $this->removeDiscount();
+        } else {
+            session()->put('discount.amount', $this->discountAmount);
+        }
+    }
+
+    /**
+     * CRITICAL: Format cart data for discount model validation
+     * The discount model expects: product_id, price, quantity
+     */
+    private function formatCartForDiscount()
+    {
+        $formattedCart = [];
+        
+        foreach ($this->cart as $id => $item) {
+            $formattedCart[] = [
+                'product_id' => $item['product_id'],
+                'price' => $item['price'],
+                'quantity' => $item['quantity']
+            ];
+        }
+        
+        return $formattedCart;
     }
 
     public function removeDiscount()
@@ -236,7 +363,6 @@ private function validateStock($cartKey, $requestedQty)
         session()->forget('discount');
         $this->discountCode = null;
         $this->discountAmount = 0;
-        $this->successMessage = 'Discount code removed';
         $this->calculateTotal();
     }
 
@@ -253,7 +379,7 @@ private function validateStock($cartKey, $requestedQty)
             $this->shipping_cost = $shipping;
         }
 
-        $this->total = $itemsTotal - $this->discountAmount + $shipping;
+        $this->total = max(0, $itemsTotal - $this->discountAmount + $shipping);
     }
 
     private function clearMessages()

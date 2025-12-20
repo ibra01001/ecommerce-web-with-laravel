@@ -91,23 +91,19 @@ class Discount extends Model
     }
 
     // Check if user/session can use this discount
-    // Handles both authenticated users and guest sessions
     public function canBeUsedBy($userId = null, $sessionId = null)
     {
-        // If no per-user limit is set, anyone can use it
         if (!$this->per_user_limit) {
             return true;
         }
 
         $usageCount = 0;
 
-        // Check usage for authenticated user
         if ($userId) {
             $usageCount = $this->users()
                 ->where('user_id', $userId)
                 ->count();
         } 
-        // Check usage for guest session
         elseif ($sessionId) {
             $usageCount = $this->users()
                 ->wherePivot('session_id', $sessionId)
@@ -120,7 +116,6 @@ class Discount extends Model
     // Check if discount applies to the cart items
     public function appliesTo($cart)
     {
-        // If applies to all products, it applies to any cart
         if ($this->applies_to_all) {
             return true;
         }
@@ -138,19 +133,22 @@ class Discount extends Model
     // Check if discount applies to a specific product
     public function appliesToProduct($productId)
     {
+        // If applies to all, it applies to any product
         if ($this->applies_to_all) {
             return true;
         }
 
-        // Check if product is directly included
-        if (in_array($productId, $this->category_ids ?? [])) {
+        // FIXED: Check if product is directly included in product_ids (not category_ids!)
+        if (!empty($this->product_ids) && in_array($productId, $this->product_ids)) {
             return true;
         }
 
-        // Check if product's category is included
-        $product = Product::find($productId);
-        if ($product && in_array($product->category_id, $this->category_ids ?? [])) {
-            return true;
+        // Check if product's category is included in category_ids
+        if (!empty($this->category_ids)) {
+            $product = Product::find($productId);
+            if ($product && in_array($product->category_id, $this->category_ids)) {
+                return true;
+            }
         }
 
         return false;

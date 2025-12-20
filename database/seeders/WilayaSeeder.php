@@ -64,7 +64,6 @@ class WilayaSeeder extends Seeder
             ['name' => '53.In Salah', 'code' => '53', 'shipping_cost' => 900],
             ['name' => '54.In Guezzam', 'code' => '54', 'shipping_cost' => 950],
             ['name' => '55.Touggourt', 'code' => '55', 'shipping_cost' => 700],
-            ['name' => '56.Djanet', 'code' => '56', 'shipping_cost' => 900],
             ['name' => '57.El Meghaier', 'code' => '57', 'shipping_cost' => 600],
             ['name' => '58.El Meniaa', 'code' => '58', 'shipping_cost' => 700],
         ]);

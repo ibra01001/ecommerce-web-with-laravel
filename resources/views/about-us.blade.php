@@ -110,10 +110,7 @@
                             style="color: var(--text-color);">
                             Meet Our Team
                         </h2>
-                        <p class="text-xl font-light max-w-2xl mx-auto"
-                           style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">
-                            The passionate people behind HoodLuxe
-                        </p>
+
                     </div>
 
                     <!-- Team Grid -->

@@ -18,16 +18,17 @@ class AdminDiscountController extends Controller
     }
 
     public function toggleActive(Discount $discount)
-{
-    $discount->update([
-        'is_active' => !$discount->is_active
-    ]);
+    {
+        $discount->update([
+            'is_active' => !$discount->is_active
+        ]);
 
-    $status = $discount->is_active ? 'activated' : 'deactivated';
-    
-    return redirect()->route('admin.discounts.index')
-        ->with('success', "Discount '{$discount->code}' has been {$status} successfully.");
-}
+        $status = $discount->is_active ? 'activated' : 'deactivated';
+        
+        return redirect()->route('admin.discounts.index')
+            ->with('success', "Discount '{$discount->code}' has been {$status} successfully.");
+    }
+
     public function create()
     {
         $categories = Category::all();
@@ -37,7 +38,8 @@ class AdminDiscountController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        // FIXED: Custom validation based on applies_to_all
+        $rules = [
             'code' => 'required|string|unique:discounts,code|max:50',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -50,16 +52,33 @@ class AdminDiscountController extends Controller
             'starts_at' => 'nullable|date',
             'expires_at' => 'nullable|date|after_or_equal:starts_at',
             'applies_to_all' => 'nullable|boolean',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
-            'product_ids' => 'nullable|array',
-            'product_ids.*' => 'exists:products,id',
             'is_active' => 'nullable|boolean',
-        ]);
+        ];
+
+        // FIXED: Only require category/product IDs if NOT applying to all
+        if (!$request->has('applies_to_all')) {
+            $rules['category_ids'] = 'required_without:product_ids|array';
+            $rules['category_ids.*'] = 'exists:categories,id';
+            $rules['product_ids'] = 'required_without:category_ids|array';
+            $rules['product_ids.*'] = 'exists:products,id';
+        } else {
+            $rules['category_ids'] = 'nullable|array';
+            $rules['category_ids.*'] = 'exists:categories,id';
+            $rules['product_ids'] = 'nullable|array';
+            $rules['product_ids.*'] = 'exists:products,id';
+        }
+
+        $validated = $request->validate($rules);
 
         $validated['code'] = strtoupper($validated['code']);
         $validated['applies_to_all'] = $request->has('applies_to_all');
         $validated['is_active'] = $request->has('is_active');
+
+        // FIXED: Clear category_ids and product_ids if applies_to_all is true
+        if ($validated['applies_to_all']) {
+            $validated['category_ids'] = null;
+            $validated['product_ids'] = null;
+        }
 
         Discount::create($validated);
 
@@ -69,11 +88,10 @@ class AdminDiscountController extends Controller
 
     public function show(Discount $discount)
     {
-        // Fix: Specify discount_user.discount_id to avoid ambiguity
         $usageData = DB::table('discount_user')
             ->leftJoin('users', 'discount_user.user_id', '=', 'users.id')
             ->leftJoin('orders', 'discount_user.order_id', '=', 'orders.id')
-            ->where('discount_user.discount_id', '=', $discount->id) // FIXED: Specify table name
+            ->where('discount_user.discount_id', '=', $discount->id)
             ->select(
                 'discount_user.*',
                 'users.name as user_name',
@@ -97,7 +115,8 @@ class AdminDiscountController extends Controller
 
     public function update(Request $request, Discount $discount)
     {
-        $validated = $request->validate([
+        // FIXED: Custom validation based on applies_to_all
+        $rules = [
             'code' => 'required|string|max:50|unique:discounts,code,' . $discount->id,
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -110,16 +129,33 @@ class AdminDiscountController extends Controller
             'starts_at' => 'nullable|date',
             'expires_at' => 'nullable|date|after_or_equal:starts_at',
             'applies_to_all' => 'nullable|boolean',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
-            'product_ids' => 'nullable|array',
-            'product_ids.*' => 'exists:products,id',
             'is_active' => 'nullable|boolean',
-        ]);
+        ];
+
+        // FIXED: Only require category/product IDs if NOT applying to all
+        if (!$request->has('applies_to_all')) {
+            $rules['category_ids'] = 'required_without:product_ids|array';
+            $rules['category_ids.*'] = 'exists:categories,id';
+            $rules['product_ids'] = 'required_without:category_ids|array';
+            $rules['product_ids.*'] = 'exists:products,id';
+        } else {
+            $rules['category_ids'] = 'nullable|array';
+            $rules['category_ids.*'] = 'exists:categories,id';
+            $rules['product_ids'] = 'nullable|array';
+            $rules['product_ids.*'] = 'exists:products,id';
+        }
+
+        $validated = $request->validate($rules);
 
         $validated['code'] = strtoupper($validated['code']);
         $validated['applies_to_all'] = $request->has('applies_to_all');
         $validated['is_active'] = $request->has('is_active');
+
+        // FIXED: Clear category_ids and product_ids if applies_to_all is true
+        if ($validated['applies_to_all']) {
+            $validated['category_ids'] = null;
+            $validated['product_ids'] = null;
+        }
 
         $discount->update($validated);
 
