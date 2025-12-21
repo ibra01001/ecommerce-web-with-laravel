@@ -137,19 +137,24 @@
             </div>
 
         </div>
-
-        <!-- Results Info -->
-        @if(request('q') || request('category'))
-            <div class="mb-8 text-center fade-in">
-                <p class="text-sm" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">
-                    Showing <span class="font-semibold" style="color: var(--text-color);">{{ $products->total() }}</span> 
-                    {{ Str::plural('result', $products->total()) }}
-                    @if(request('q'))
-                        for "<span class="font-semibold" style="color: var(--text-color);">{{ request('q') }}</span>"
-                    @endif
-                </p>
-            </div>
-        @endif
+<!-- Results Info -->
+@if(request('q') || request('category'))
+    <div class="mb-12 text-center fade-in">
+        <div class="inline-flex items-center gap-2 px-6 py-3 rounded-full"
+             style="background: color-mix(in srgb, var(--primary-color) 8%, transparent);">
+            <svg class="w-4 h-4" style="color: var(--primary-color);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+            <p class="text-sm font-medium" style="color: var(--text-color);">
+                <span class="font-semibold" style="color: var(--primary-color);">{{ $products->total() }}</span> 
+                {{ Str::plural('result', $products->total()) }}
+                @if(request('q'))
+                    for "<span class="font-semibold">{{ request('q') }}</span>"
+                @endif
+            </p>
+        </div>
+    </div>
+@endif
 
         <!-- Product Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
@@ -277,12 +282,226 @@
             @endforelse
         </div>
 
-        <!-- Pagination -->
-        @if($products->hasPages())
-            <div class="mt-20 flex justify-center fade-in">
-                {{ $products->appends(['q' => request('q'), 'category' => request('category')])->links() }}
+<!-- Pagination Section -->
+@if($products->hasPages())
+    <div class="mt-20 mb-8 fade-in">
+        
+        <!-- Desktop & Tablet Pagination -->
+        <div class="hidden sm:block">
+            <div class="flex flex-col items-center gap-8">
+                
+                <!-- Page Info -->
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="font-light" style="color: color-mix(in srgb, var(--text-color) 60%, transparent);">
+                        Showing
+                    </span>
+                    <span class="px-4 py-2 rounded-lg font-medium"
+                          style="background: color-mix(in srgb, var(--primary-color) 10%, transparent); color: var(--text-color);">
+                        {{ $products->firstItem() }}–{{ $products->lastItem() }}
+                    </span>
+                    <span class="font-light" style="color: color-mix(in srgb, var(--text-color) 60%, transparent);">
+                        of
+                    </span>
+                    <span class="px-4 py-2 rounded-lg font-semibold"
+                          style="background: color-mix(in srgb, var(--primary-color) 10%, transparent); color: var(--primary-color);">
+                        {{ $products->total() }}
+                    </span>
+                    <span class="font-light" style="color: color-mix(in srgb, var(--text-color) 60%, transparent);">
+                        items
+                    </span>
+                </div>
+
+                <!-- Pagination Controls -->
+                <nav class="flex items-center gap-2" role="navigation" aria-label="Pagination">
+                    
+                    <!-- Previous Button -->
+                    @if($products->onFirstPage())
+                        <span class="px-5 py-3 rounded-xl cursor-not-allowed flex items-center gap-2 border-2 transition-all duration-300"
+                              style="background: transparent; border-color: color-mix(in srgb, var(--text-color) 15%, transparent); color: color-mix(in srgb, var(--text-color) 30%, transparent);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                            <span class="hidden md:inline font-medium">Previous</span>
+                        </span>
+                    @else
+                        <a href="{{ $products->appends(request()->query())->previousPageUrl() }}"
+                           class="px-5 py-3 rounded-xl flex items-center gap-2 border-2 transition-all duration-300 group"
+                           style="background: transparent; border-color: color-mix(in srgb, var(--text-color) 20%, transparent); color: var(--text-color);"
+                           onmouseover="this.style.background='var(--primary-color)'; this.style.borderColor='var(--primary-color)'; this.style.color='white'"
+                           onmouseout="this.style.background='transparent'; this.style.borderColor='color-mix(in srgb, var(--text-color) 20%, transparent)'; this.style.color='var(--text-color)'">
+                            <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                            <span class="hidden md:inline font-medium">Previous</span>
+                        </a>
+                    @endif
+
+                    <!-- Page Numbers -->
+                    <div class="flex items-center gap-2">
+                        @foreach(range(1, $products->lastPage()) as $page)
+                            @if($page == $products->currentPage())
+                                <!-- Current Page -->
+                                <span class="min-w-[3rem] px-4 py-3 rounded-xl text-center font-semibold text-white shadow-lg transition-all duration-300"
+                                      style="background: var(--primary-color);">
+                                    {{ $page }}
+                                </span>
+                            @elseif($page == 1 || $page == $products->lastPage() || abs($page - $products->currentPage()) <= 2)
+                                <!-- Visible Pages -->
+                                <a href="{{ $products->appends(request()->query())->url($page) }}"
+                                   class="min-w-[3rem] px-4 py-3 rounded-xl text-center font-medium border-2 transition-all duration-300"
+                                   style="background: transparent; border-color: color-mix(in srgb, var(--text-color) 15%, transparent); color: var(--text-color);"
+                                   onmouseover="this.style.background='color-mix(in srgb, var(--primary-color) 15%, transparent)'; this.style.borderColor='var(--primary-color)'; this.style.color='var(--primary-color)'"
+                                   onmouseout="this.style.background='transparent'; this.style.borderColor='color-mix(in srgb, var(--text-color) 15%, transparent)'; this.style.color='var(--text-color)'">
+                                    {{ $page }}
+                                </a>
+                            @elseif(abs($page - $products->currentPage()) == 3)
+                                <!-- Ellipsis -->
+                                <span class="px-2 font-light" style="color: color-mix(in srgb, var(--text-color) 40%, transparent);">
+                                    ···
+                                </span>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    <!-- Next Button -->
+                    @if($products->hasMorePages())
+                        <a href="{{ $products->appends(request()->query())->nextPageUrl() }}"
+                           class="px-5 py-3 rounded-xl flex items-center gap-2 border-2 transition-all duration-300 group"
+                           style="background: transparent; border-color: color-mix(in srgb, var(--text-color) 20%, transparent); color: var(--text-color);"
+                           onmouseover="this.style.background='var(--primary-color)'; this.style.borderColor='var(--primary-color)'; this.style.color='white'"
+                           onmouseout="this.style.background='transparent'; this.style.borderColor='color-mix(in srgb, var(--text-color) 20%, transparent)'; this.style.color='var(--text-color)'">
+                            <span class="hidden md:inline font-medium">Next</span>
+                            <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    @else
+                        <span class="px-5 py-3 rounded-xl cursor-not-allowed flex items-center gap-2 border-2 transition-all duration-300"
+                              style="background: transparent; border-color: color-mix(in srgb, var(--text-color) 15%, transparent); color: color-mix(in srgb, var(--text-color) 30%, transparent);">
+                            <span class="hidden md:inline font-medium">Next</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                    @endif
+
+                </nav>
+
+                <!-- Quick Jump (optional) -->
+                @if($products->lastPage() > 10)
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-light" style="color: color-mix(in srgb, var(--text-color) 60%, transparent);">
+                            Jump to page:
+                        </span>
+                        <form method="GET" action="{{ route('products.index') }}" class="flex items-center gap-2">
+                            @foreach(request()->query() as $key => $value)
+                                @if($key !== 'page')
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endif
+                            @endforeach
+                            <input type="number" 
+                                   name="page" 
+                                   min="1" 
+                                   max="{{ $products->lastPage() }}"
+                                   placeholder="{{ $products->currentPage() }}"
+                                   class="w-20 px-3 py-2 rounded-lg text-center border-2 transition-all duration-300"
+                                   style="background: var(--background-color); border-color: color-mix(in srgb, var(--text-color) 20%, transparent); color: var(--text-color);"
+                                   onfocus="this.style.borderColor='var(--primary-color)'"
+                                   onblur="this.style.borderColor='color-mix(in srgb, var(--text-color) 20%, transparent)'">
+                            <button type="submit"
+                                    class="px-4 py-2 rounded-lg text-white font-medium transition-all duration-300"
+                                    style="background: var(--primary-color);"
+                                    onmouseover="this.style.background='var(--secondary-color)'"
+                                    onmouseout="this.style.background='var(--primary-color)'">
+                                Go
+                            </button>
+                        </form>
+                    </div>
+                @endif
+
             </div>
-        @endif
+        </div>
+
+        <!-- Mobile Pagination -->
+        <div class="block sm:hidden">
+            <div class="flex flex-col items-center gap-6">
+                
+                <!-- Mobile Page Info -->
+                <div class="text-center">
+                    <p class="text-sm font-light mb-1" style="color: color-mix(in srgb, var(--text-color) 60%, transparent);">
+                        Page {{ $products->currentPage() }} of {{ $products->lastPage() }}
+                    </p>
+                    <p class="text-xs font-light" style="color: color-mix(in srgb, var(--text-color) 50%, transparent);">
+                        {{ $products->firstItem() }}–{{ $products->lastItem() }} of {{ $products->total() }} items
+                    </p>
+                </div>
+
+                <!-- Mobile Navigation -->
+                <div class="flex items-center gap-3 w-full max-w-sm">
+                    
+                    @if($products->onFirstPage())
+                        <span class="flex-1 px-6 py-4 rounded-xl cursor-not-allowed text-center border-2"
+                              style="background: transparent; border-color: color-mix(in srgb, var(--text-color) 15%, transparent); color: color-mix(in srgb, var(--text-color) 30%, transparent);">
+                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </span>
+                    @else
+                        <a href="{{ $products->appends(request()->query())->previousPageUrl() }}"
+                           class="flex-1 px-6 py-4 rounded-xl text-center border-2 transition-all duration-300 active:scale-95"
+                           style="background: transparent; border-color: var(--primary-color); color: var(--primary-color);"
+                           ontouchstart="this.style.background='color-mix(in srgb, var(--primary-color) 10%, transparent)'"
+                           ontouchend="this.style.background='transparent'">
+                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </a>
+                    @endif
+
+                    <!-- Current Page Indicator -->
+                    <div class="px-6 py-4 rounded-xl font-semibold text-white shadow-lg"
+                         style="background: var(--primary-color);">
+                        {{ $products->currentPage() }}
+                    </div>
+
+                    @if($products->hasMorePages())
+                        <a href="{{ $products->appends(request()->query())->nextPageUrl() }}"
+                           class="flex-1 px-6 py-4 rounded-xl text-center border-2 transition-all duration-300 active:scale-95"
+                           style="background: transparent; border-color: var(--primary-color); color: var(--primary-color);"
+                           ontouchstart="this.style.background='color-mix(in srgb, var(--primary-color) 10%, transparent)'"
+                           ontouchend="this.style.background='transparent'">
+                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    @else
+                        <span class="flex-1 px-6 py-4 rounded-xl cursor-not-allowed text-center border-2"
+                              style="background: transparent; border-color: color-mix(in srgb, var(--text-color) 15%, transparent); color: color-mix(in srgb, var(--text-color) 30%, transparent);">
+                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                    @endif
+
+                </div>
+
+                <!-- Load More Button (Alternative Mobile Option) -->
+                @if($products->hasMorePages() && $products->currentPage() < 5)
+                    <a href="{{ $products->appends(request()->query())->nextPageUrl() }}"
+                       class="w-full max-w-sm px-8 py-4 rounded-xl text-center text-white font-medium transition-all duration-300 shadow-lg active:scale-95"
+                       style="background: var(--primary-color);"
+                       ontouchstart="this.style.background='var(--secondary-color)'"
+                       ontouchend="this.style.background='var(--primary-color)'">
+                        Load More Products
+                    </a>
+                @endif
+
+            </div>
+        </div>
+
+    </div>
+@endif
+
 
     </div>
 </section>

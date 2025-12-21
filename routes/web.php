@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\HeroHomeController;
 use App\Http\Controllers\Admin\AdminFooterController;
 use App\Http\Controllers\Admin\AdminFeaturesController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\Admin\AdminNewsController;
 use App\Http\Controllers\Admin\AdminNewsletterController;
 use App\Http\Controllers\ThemeController;   
 
@@ -129,6 +130,14 @@ Route::delete('/appearance/themes/{theme}', [AdminLogoAndThemeController::class,
  Route::post('/themes/{id}/activate', [AdminLogoAndThemeController::class, 'activateTheme'])
         ->name('themes.activate');
 
+// News Articles Management
+    Route::controller(AdminNewsController::class)->prefix('news')->name('news.')->group(function () {
+        Route::get('/index', 'index')->name('index');
+        Route::put('/update', 'update')->name('update');
+        Route::delete('/image', 'deleteImage')->name('delete-image');
+        Route::post('/{news}/toggle', 'toggleActive')->name('toggle');
+    });
+    
 });
 
 

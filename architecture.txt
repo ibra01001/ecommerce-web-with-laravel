@@ -12,6 +12,7 @@
 │   │   │   │   ├── AdminFeaturesController.php
 │   │   │   │   ├── AdminFooterController.php
 │   │   │   │   ├── AdminLogoAndThemeController.php
+│   │   │   │   ├── AdminNewsController.php
 │   │   │   │   ├── AdminNewsletterController.php
 │   │   │   │   ├── AdminProductController.php
 │   │   │   │   ├── AdminStockTypeController.php
@@ -57,6 +58,7 @@
 │   │   ├── Footer.php
 │   │   ├── HeroHomePage.php
 │   │   ├── Logo.php
+│   │   ├── News.php
 │   │   ├── OrderItem.php
 │   │   ├── Order.php
 │   │   ├── ProductImage.php
@@ -130,7 +132,8 @@
 │   │   ├── 2025_12_14_000000_custom_footer.php
 │   │   ├── 2025_12_14_164927_create_features_sections_table.php
 │   │   ├── 2025_12_15_114442_create_newsletter_subscribers_table.php
-│   │   └── 2025_12_17_195626_create_themes_table.php
+│   │   ├── 2025_12_17_195626_create_themes_table.php
+│   │   └── 2025_12_20_000000_news.php
 │   └── seeders
 │       ├── AdminUserSeeder.php
 │       ├── CommunesSeeder.php
@@ -197,6 +200,8 @@
 │       │   │   └── edit.blade.php
 │       │   ├── layout.blade.php
 │       │   ├── logo.blade.php
+│       │   ├── news
+│       │   │   └── index.blade.php
 │       │   ├── newsletter
 │       │   │   └── index.blade.php
 │       │   ├── orders
@@ -251,7 +256,8 @@
 │       │   ├── guest.blade.php
 │       │   ├── hero.blade.php
 │       │   ├── logo.blade.php
-│       │   └── navigation.blade.php
+│       │   ├── navigation.blade.php
+│       │   └── news.blade.php
 │       ├── livewire
 │       │   ├── cart-component.blade.php
 │       │   └── cart-counter.blade.php
@@ -286,4 +292,4 @@
 │       └── ExampleTest.php
 └── vite.config.js
 
-59 directories, 228 files
+60 directories, 233 files

@@ -16,7 +16,7 @@
             @include('layouts.hero')
         </div>
     </section>
-
+    @include('layouts.news')
     <!-- Featured Products Section -->
     <section id="featured" class="py-24 px-6">
         <div class="max-w-7xl mx-auto">
@@ -24,11 +24,11 @@
             <!-- Section Header -->
             <div class="text-center mb-20 space-y-4 fade-in">
                 <h2 class="text-4xl md:text-5xl font-light tracking-tight text-theme-text">
-                    Featured Collection
+                    Latest Arrivals
                 </h2>
                 <p class="text-lg max-w-2xl mx-auto font-light" 
                    style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">
-                    Handpicked pieces that define modern comfort
+                    Discover Our Products
                 </p>
             </div>
 

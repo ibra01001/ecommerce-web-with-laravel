@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('primary_button_link')->nullable();
             $table->string('secondary_button_text')->nullable();
             $table->string('secondary_button_link')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(false);
             $table->timestamps();
         });
     }
