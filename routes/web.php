@@ -22,7 +22,9 @@ use App\Http\Controllers\Admin\AdminFeaturesController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\Admin\AdminNewsController;
 use App\Http\Controllers\Admin\AdminNewsletterController;
-use App\Http\Controllers\ThemeController;   
+use App\Http\Controllers\ThemeController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\Admin\AdminContactController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -32,6 +34,7 @@ Route::get('/about-us', [AboutUsController::class, 'index'])->name('about-us');
 // Admin Routes - PROTECTED by auth and admin middleware
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+
 
     // Admin User Management Routes
     Route::resource('users', AdminUserController::class);
@@ -47,18 +50,28 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])
         ->name('orders.updateStatus');
 
+    // contact
+    Route::get('/contact/index', [App\Http\Controllers\Admin\AdminContactController::class, 'index'])->name('contact.index');
+    Route::get('/contact/show/{id}', [App\Http\Controllers\Admin\AdminContactController::class, 'show'])->name('contact.show');
+    Route::post('/contact/mark-read', [App\Http\Controllers\Admin\AdminContactController::class, 'markAsRead'])->name('contact.mark-read');
+    Route::post('/contact/mark-multiple-read', [App\Http\Controllers\Admin\AdminContactController::class, 'markMultipleAsRead'])->name('contact.mark-multiple-read');
+    Route::post('/contact/{id}/note', [App\Http\Controllers\Admin\AdminContactController::class, 'addNote'])->name('contact.add-note');
+    Route::delete('/contact/{id}', [App\Http\Controllers\Admin\AdminContactController::class, 'destroy'])->name('contact.destroy');
+    Route::delete('/contact/destroy-multiple', [App\Http\Controllers\Admin\AdminContactController::class, 'destroyMultiple'])->name('contact.destroy-multiple');
+    Route::get('/contact/export', [App\Http\Controllers\Admin\AdminContactController::class, 'export'])->name('contact.export');
+
     // Logo and Theme Management
     Route::get('/appearance/settings', [AdminLogoAndThemeController::class, 'settings'])
         ->name('appearance.settings');
 
-Route::post('/appearance/upload-light-logo', [AdminLogoAndThemeController::class, 'uploadLightLogo'])
-    ->name('appearance.upload_Light_logo');
+    Route::post('/appearance/upload-light-logo', [AdminLogoAndThemeController::class, 'uploadLightLogo'])
+        ->name('appearance.upload_Light_logo');
 
-Route::post('/appearance/upload-dark-logo', [AdminLogoAndThemeController::class, 'uploadDarkLogo'])
-    ->name('appearance.upload_Dark_logo');
+    Route::post('/appearance/upload-dark-logo', [AdminLogoAndThemeController::class, 'uploadDarkLogo'])
+        ->name('appearance.upload_Dark_logo');
 
-Route::delete('/appearance/delete-logo', [AdminLogoAndThemeController::class, 'deleteLogo'])
-    ->name('appearance.delete_logo');
+    Route::delete('/appearance/delete-logo', [AdminLogoAndThemeController::class, 'deleteLogo'])
+        ->name('appearance.delete_logo');
 
     // Stock Types Management
     Route::resource('stock-types', AdminStockTypeController::class);
@@ -104,40 +117,40 @@ Route::delete('/appearance/delete-logo', [AdminLogoAndThemeController::class, 'd
     // Brand Story
     Route::get('/brand-story', [AdminFeaturesController::class, 'editBrandStory'])->name('brand-story.edit');
     Route::put('/brand-story', [AdminFeaturesController::class, 'updateBrandStory'])->name('brand-story.update');
-// Newsletter Management Routes
+    // Newsletter Management Routes
     Route::get('/newsletter', [AdminNewsletterController::class, 'index'])
-    ->name('newsletter.index');
+        ->name('newsletter.index');
 
-Route::delete('/newsletter/{id}', [AdminNewsletterController::class, 'delete'])
-    ->name('newsletter.delete');
+    Route::delete('/newsletter/{id}', [AdminNewsletterController::class, 'delete'])
+        ->name('newsletter.delete');
 
-// Appearance / Themes
-Route::get('/appearance/settings', [AdminLogoAndThemeController::class, 'settings'])
-    ->name('appearance.settings');
+    // Appearance / Themes
+    Route::get('/appearance/settings', [AdminLogoAndThemeController::class, 'settings'])
+        ->name('appearance.settings');
 
-Route::post('/appearance/themes', [AdminLogoAndThemeController::class, 'createTheme'])
-    ->name('appearance.create_theme');
+    Route::post('/appearance/themes', [AdminLogoAndThemeController::class, 'createTheme'])
+        ->name('appearance.create_theme');
 
-Route::put('/appearance/themes/{theme}', [AdminLogoAndThemeController::class, 'updateTheme'])
-    ->name('appearance.update_theme');
+    Route::put('/appearance/themes/{theme}', [AdminLogoAndThemeController::class, 'updateTheme'])
+        ->name('appearance.update_theme');
 
-Route::post('/appearance/themes/{theme}/activate', [AdminLogoAndThemeController::class, 'activateTheme'])
-    ->name('appearance.activate_theme');
+    Route::post('/appearance/themes/{theme}/activate', [AdminLogoAndThemeController::class, 'activateTheme'])
+        ->name('appearance.activate_theme');
 
-Route::delete('/appearance/themes/{theme}', [AdminLogoAndThemeController::class, 'deleteTheme'])
-    ->name('appearance.delete_theme');
+    Route::delete('/appearance/themes/{theme}', [AdminLogoAndThemeController::class, 'deleteTheme'])
+        ->name('appearance.delete_theme');
 
- Route::post('/themes/{id}/activate', [AdminLogoAndThemeController::class, 'activateTheme'])
+    Route::post('/themes/{id}/activate', [AdminLogoAndThemeController::class, 'activateTheme'])
         ->name('themes.activate');
 
-// News Articles Management
+    // News Articles Management
     Route::controller(AdminNewsController::class)->prefix('news')->name('news.')->group(function () {
         Route::get('/index', 'index')->name('index');
         Route::put('/update', 'update')->name('update');
         Route::delete('/image', 'deleteImage')->name('delete-image');
         Route::post('/{news}/toggle', 'toggleActive')->name('toggle');
     });
-    
+
 });
 
 
@@ -184,5 +197,8 @@ Route::get('/order/{order}/thankyou', [CheckoutController::class, 'thankyou'])->
 // Shipping Routes
 Route::get('/checkout/shipping', [ShippingController::class, 'index'])->name('checkout.shipping');
 Route::get('/checkout/communes/{wilaya_id}', [ShippingController::class, 'getCommunes']);
+
+Route::get('/contact', [App\Http\Controllers\ContactController::class, 'contact'])->name('contact');
+Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
 
 require __DIR__ . '/auth.php';

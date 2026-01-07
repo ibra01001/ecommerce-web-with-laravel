@@ -7,6 +7,7 @@
 │   │   │   │   ├── AboutUsAdminController.php
 │   │   │   │   ├── AdminCategoryController.php
 │   │   │   │   ├── AdminCheckout.php
+│   │   │   │   ├── AdminContactController.php
 │   │   │   │   ├── AdminController.php
 │   │   │   │   ├── AdminDiscountController.php
 │   │   │   │   ├── AdminFeaturesController.php
@@ -31,6 +32,7 @@
 │   │   │   │   └── VerifyEmailController.php
 │   │   │   ├── CartController.php
 │   │   │   ├── CheckoutController.php
+│   │   │   ├── ContactController.php
 │   │   │   ├── Controller.php
 │   │   │   ├── HomeController.php
 │   │   │   ├── NewsletterController.php
@@ -52,6 +54,7 @@
 │   │   ├── BrandStorySection.php
 │   │   ├── Category.php
 │   │   ├── Commune.php
+│   │   ├── ContactMessage.php
 │   │   ├── Discount.php
 │   │   ├── FeatureItem.php
 │   │   ├── FeaturesSection.php
@@ -133,7 +136,8 @@
 │   │   ├── 2025_12_14_164927_create_features_sections_table.php
 │   │   ├── 2025_12_15_114442_create_newsletter_subscribers_table.php
 │   │   ├── 2025_12_17_195626_create_themes_table.php
-│   │   └── 2025_12_20_000000_news.php
+│   │   ├── 2025_12_20_000000_news.php
+│   │   └── 2025_12_21_183941_create_contact_message_table.php
 │   └── seeders
 │       ├── AdminUserSeeder.php
 │       ├── CommunesSeeder.php
@@ -181,6 +185,8 @@
 │       │   │   ├── create.blade.php
 │       │   │   ├── edit.blade.php
 │       │   │   └── index.blade.php
+│       │   ├── contact
+│       │   │   └── messages.blade.php
 │       │   ├── dashboard.blade.php
 │       │   ├── discounts
 │       │   │   ├── create.blade.php
@@ -248,6 +254,7 @@
 │       │   ├── secondary-button.blade.php
 │       │   ├── text-input.blade.php
 │       │   └── theme-styles.blade.php
+│       ├── contact.blade.php
 │       ├── home.blade.php
 │       ├── layouts
 │       │   ├── app.blade.php
@@ -292,4 +299,4 @@
 │       └── ExampleTest.php
 └── vite.config.js
 
-60 directories, 233 files
+61 directories, 239 files
