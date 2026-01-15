@@ -25,15 +25,21 @@ use App\Http\Controllers\Admin\AdminNewsletterController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Admin\AdminContactController;
+use App\Http\Controllers\Admin\AdminTermsController;
+use App\Http\Controllers\Admin\AdminPrivacyController;
+use App\Http\Controllers\TermsController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // About Us public route
 Route::get('/about-us', [AboutUsController::class, 'index'])->name('about-us');
+Route::get('/terms', [TermsController::class, 'index'])->name('terms.index');
 
 // Admin Routes - PROTECTED by auth and admin middleware
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+    //terms and privacy
+    Route::resource('terms', AdminTermsController::class);
 
 
     // Admin User Management Routes
