@@ -144,8 +144,7 @@
                                    onfocus="this.style.borderColor='var(--primary-color)'"
                                    onblur="this.style.borderColor='{{ $errors->has('phone') ? '#ef4444' : 'transparent' }}'"
                                    value="{{ old('phone') }}"
-                                   maxlength="10"
-                                   placeholder="{{ $footer->phone }}">
+                                   maxlength="10">
                             @error('phone')
                             <p class="text-sm font-light" style="color: #ef4444;">{{ $message }}</p>
                             @enderror
