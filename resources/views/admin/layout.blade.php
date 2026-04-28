@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin | HoodLuxe')</title>
+
+    <link rel="icon" type="image/svg+xml" href="{{ asset('storage/white-07.svg') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('storage/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('storage/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('storage/apple-touch-icon.png') }}">
+
     <script src="https://cdn.tailwindcss.com"></script>
     @foreach(config('fonts') as $font)
         <link href="{{ $font['url'] }}" rel="stylesheet">

@@ -144,6 +144,8 @@
                                    onfocus="this.style.borderColor='var(--primary-color)'"
                                    onblur="this.style.borderColor='{{ $errors->has('phone') ? '#ef4444' : 'transparent' }}'"
                                    value="{{ old('phone') }}"
+                                   maxlength="10"
+                                   placeholder="{{ $footer?->phone }}">
                                    maxlength="10">
                             @error('phone')
                             <p class="text-sm font-light" style="color: #ef4444;">{{ $message }}</p>
@@ -220,7 +222,7 @@
                     <!-- Contact Cards -->
                     <div class="space-y-6">
                         <!-- Email Card -->
-                        @if($footer->email)
+                        @if($footer?->email)
                         <div class="contact-card p-8 border-2 border-transparent transition-all duration-300"
                             style="background: color-mix(in srgb, var(--primary-color) 3%, transparent); border-radius: 1rem;">
                             <div class="flex items-start gap-6">
@@ -233,9 +235,9 @@
                                 </div>
                                 <div class="space-y-2">
                                     <h3 class="text-lg font-medium text-theme-text">Email</h3>
-                                    <a href="mailto:{{ $footer->email }}"
+                                    <a href="mailto:{{ $footer?->email }}"
                                         class="text-base font-light text-theme-primary hover:text-theme-secondary transition-colors">
-                                        {{ $footer->email }}
+                                        {{ $footer?->email }}
                                     </a>
 
                                 </div>
@@ -244,7 +246,7 @@
                         @endif
 
                         <!-- Phone Card -->
-                        @if($footer->phone)
+                        @if($footer?->phone)
                         <div class="contact-card p-8 border-2 border-transparent transition-all duration-300"
                             style="background: color-mix(in srgb, var(--primary-color) 3%, transparent); border-radius: 1rem;">
                             <div class="flex items-start gap-6">
@@ -257,9 +259,9 @@
                                 </div>
                                 <div class="space-y-2">
                                     <h3 class="text-lg font-medium text-theme-text">Phone</h3>
-                                    <a href="tel:{{ $footer->phone }}"
+                                    <a href="tel:{{ $footer?->phone }}"
                                         class="text-base font-light text-theme-primary hover:text-theme-secondary transition-colors">
-                                        {{ $footer->phone }}
+                                        {{ $footer?->phone }}
                                     </a>
 
                                 </div>
@@ -268,7 +270,7 @@
                         @endif
 
                         <!-- Address Card -->
-                        @if($footer->address)
+                        @if($footer?->address)
                         <div class="contact-card p-8 border-2 border-transparent transition-all duration-300"
                             style="background: color-mix(in srgb, var(--primary-color) 3%, transparent); border-radius: 1rem;">
                             <div class="flex items-start gap-6">
@@ -284,7 +286,7 @@
                                 <div class="space-y-2">
                                     <h3 class="text-lg font-medium text-theme-text">Visit Us</h3>
                                     <p class="text-base font-light text-theme-text">
-                                        {{ $footer->address }}
+                                        {{ $footer?->address }}
                                     </p>
                                 </div>
                             </div>
