@@ -146,6 +146,7 @@
                                    value="{{ old('phone') }}"
                                    maxlength="10"
                                    placeholder="{{ $footer?->phone }}">
+                                   maxlength="10">
                             @error('phone')
                             <p class="text-sm font-light" style="color: #ef4444;">{{ $message }}</p>
                             @enderror
