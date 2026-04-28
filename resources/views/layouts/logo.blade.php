@@ -1,4 +1,3 @@
-
 <a href="{{ url('/') }}" class="flex items-center">
     @if($currentLogoUrl)
         <img src="{{ $currentLogoUrl }}" alt="Site Logo" class="h-12">

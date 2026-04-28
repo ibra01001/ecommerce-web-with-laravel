@@ -9,18 +9,18 @@
             
             <!-- About Section -->
             <div class="space-y-4">
-                @if($footer->business_name)
-                    <h3 class="text-xl font-semibold" style="color: var(--text-color);">{{ $footer->business_name }}</h3>
+                @if($footer?->business_name)
+                    <h3 class="text-xl font-semibold" style="color: var(--text-color);">{{ $footer?->business_name }}</h3>
                 @endif
                 
-                @if($footer->about_text)
-                    <p class="text-sm leading-relaxed" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer->about_text }}</p>
+                @if($footer?->about_text)
+                    <p class="text-sm leading-relaxed" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer?->about_text }}</p>
                 @endif
 
                 <!-- Social Media Links -->
-                @if($footer->show_social_media && $footer->hasSocialMediaLinks())
+                @if($footer?->show_social_media && $footer?->hasSocialMediaLinks())
                     <div class="flex items-center gap-3 pt-2">
-                        @foreach($footer->getActiveSocialMediaLinks() as $platform => $link)
+                        @foreach($footer?->getActiveSocialMediaLinks() as $platform => $link)
                             <a href="{{ $link['url'] }}" target="_blank" rel="noopener noreferrer"
                                class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
                                style="background: color-mix(in srgb, var(--primary-color) 85%, transparent); color: color-mix(in srgb, var(--text-color) 70%, transparent);"
@@ -98,57 +98,57 @@
             </div>
 
             <!-- Contact Information -->
-            @if($footer->show_contact_info && $footer->hasContactInfo())
+            @if($footer?->show_contact_info && $footer?->hasContactInfo())
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold" style="color: var(--text-color);">Contact Us</h3>
                     <ul class="space-y-3">
-                        @if($footer->email)
+                        @if($footer?->email)
                             <li class="flex items-start gap-3">
                                 <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
-                                <a href="mailto:{{ $footer->email }}" 
+                                <a href="mailto:{{ $footer?->email }}" 
                                    class="text-sm transition-colors duration-300"
                                    style="color: color-mix(in srgb, var(--text-color) 70%, transparent);"
                                    onmouseover="this.style.color='var(--primary-color)'"
-                                   onmouseout="this.style.color='color-mix(in srgb, var(--text-color) 70%, transparent)'">{{ $footer->email }}</a>
+                                   onmouseout="this.style.color='color-mix(in srgb, var(--text-color) 70%, transparent)'">{{ $footer?->email }}</a>
                             </li>
                         @endif
 
-                        @if($footer->phone)
+                        @if($footer?->phone)
                             <li class="flex items-start gap-3">
                                 <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                                 </svg>
-                                <a href="tel:{{ $footer->phone }}" 
+                                <a href="tel:{{ $footer?->phone }}" 
                                    class="text-sm transition-colors duration-300"
                                    style="color: color-mix(in srgb, var(--text-color) 70%, transparent);"
                                    onmouseover="this.style.color='var(--primary-color)'"
-                                   onmouseout="this.style.color='color-mix(in srgb, var(--text-color) 70%, transparent)'">{{ $footer->phone }}</a>
+                                   onmouseout="this.style.color='color-mix(in srgb, var(--text-color) 70%, transparent)'">{{ $footer?->phone }}</a>
                             </li>
                         @endif
 
-                        @if($footer->address)
+                        @if($footer?->address)
                             <li class="flex items-start gap-3">
                                 <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
-                                <span class="text-sm" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer->address }}</span>
+                                <span class="text-sm" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer?->address }}</span>
                             </li>
                         @endif
 
-                        @if($footer->working_hours || $footer->working_days)
+                        @if($footer?->working_hours || $footer?->working_days)
                             <li class="flex items-start gap-3 pt-2">
                                 <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 <div class="text-sm">
-                                    @if($footer->working_days)
-                                        <p style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer->working_days }}</p>
+                                    @if($footer?->working_days)
+                                        <p style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer?->working_days }}</p>
                                     @endif
-                                    @if($footer->working_hours)
-                                        <p style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer->working_hours }}</p>
+                                    @if($footer?->working_hours)
+                                        <p style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer?->working_hours }}</p>
                                     @endif
                                 </div>
                             </li>
@@ -158,13 +158,13 @@
             @endif
 
             <!-- Newsletter -->
-            @if($footer->show_newsletter)
+            @if($footer?->show_newsletter)
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold" style="color: var(--text-color);">
-                        {{ $footer->newsletter_title ?? 'Newsletter' }}
+                        {{ $footer?->newsletter_title ?? 'Newsletter' }}
                     </h3>
-                    @if($footer->newsletter_description)
-                        <p class="text-sm" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer->newsletter_description }}</p>
+                    @if($footer?->newsletter_description)
+                        <p class="text-sm" style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">{{ $footer?->newsletter_description }}</p>
                     @endif
                     <form action="{{ route('newsletter.subscribe') }}" method="POST" class="space-y-3">
                         @csrf
@@ -191,13 +191,13 @@
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <!-- Copyright -->
                 <p class="text-sm text-center md:text-left" style="color: color-mix(in srgb, var(--primary-color) 70%, transparent);">
-                    {{ $footer->copyright_text ?? '© ' . date('Y') . ' All rights reserved.' }}
+                    {{ $footer?->copyright_text ?? '© ' . date('Y') . ' All rights reserved.' }}
                 </p>
 
                 <!-- Legal Links -->
                 <div class="flex items-center gap-6">
-                    @if($footer->terms_url)
-                        <a href="{{ $footer->terms_url }}" 
+                    @if($footer?->terms_url)
+                        <a href="{{ $footer?->terms_url }}" 
                            class="text-sm transition-colors duration-300"
                            style="color: color-mix(in srgb, var(--primary-color) 70%, transparent);"
                            onmouseover="this.style.color='var(--primary-color)'"
@@ -205,8 +205,8 @@
                             Terms & Conditions
                         </a>
                     @endif
-                    @if($footer->privacy_url)
-                        <a href="{{ $footer->privacy_url }}" 
+                    @if($footer?->privacy_url)
+                        <a href="{{ $footer?->privacy_url }}" 
                            class="text-sm transition-colors duration-300"
                            style="color: color-mix(in srgb, var(--primary-color) 70%, transparent);"
                            onmouseover="this.style.color='var(--primary-color)'"
@@ -214,8 +214,8 @@
                             Privacy Policy
                         </a>
                     @endif
-                    @if($footer->refund_policy_url)
-                        <a href="{{ $footer->refund_policy_url }}" 
+                    @if($footer?->refund_policy_url)
+                        <a href="{{ $footer?->refund_policy_url }}" 
                            class="text-sm transition-colors duration-300"
                            style="color: color-mix(in srgb, var(--primary-color) 70%, transparent);"
                            onmouseover="this.style.color='var(--primary-color)'"

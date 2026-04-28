@@ -10,9 +10,12 @@
             <div class="mb-8 fade-in">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <h1 class="text-4xl font-light tracking-tight text-theme-text mb-2">
-                            Contact Messages
-                        </h1>
+                        <div class="flex items-center gap-3 mb-2">
+                            <img src="{{ asset('storage/black -06.svg') }}" alt="Icon" class="w-10 h-10">
+                            <h1 class="text-4xl font-light tracking-tight text-theme-text">
+                                Contact Messages
+                            </h1>
+                        </div>
                         <p class="text-lg font-light"
                             style="color: color-mix(in srgb, var(--text-color) 70%, transparent);">
                             Manage and respond to customer inquiries
@@ -395,11 +398,11 @@
 
             // Show loading state
             modalContent.innerHTML = `
-                    <div class="p-12 text-center">
-                        <div class="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mx-auto" style="border-color: var(--primary-color); border-top-color: transparent;"></div>
-                        <p class="mt-4 text-theme-text font-light">Loading message...</p>
-                    </div>
-                `;
+                            <div class="p-12 text-center">
+                                <div class="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mx-auto" style="border-color: var(--primary-color); border-top-color: transparent;"></div>
+                                <p class="mt-4 text-theme-text font-light">Loading message...</p>
+                            </div>
+                        `;
 
             modal.classList.add('show');
 
@@ -411,10 +414,10 @@
                 })
                 .catch(error => {
                     modalContent.innerHTML = `
-                            <div class="p-12 text-center">
-                                <p class="text-red-500">Error loading message</p>
-                            </div>
-                        `;
+                                    <div class="p-12 text-center">
+                                        <p class="text-red-500">Error loading message</p>
+                                    </div>
+                                `;
                 });
         }
 

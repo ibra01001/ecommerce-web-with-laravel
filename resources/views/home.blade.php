@@ -1,5 +1,7 @@
 @extends('layouts.app')
-@section('title', 'HoodLuxe — Premium Hoodies for the Modern You')
+@section('title', 'MetroWise')
+
+
 @section('content')
 
     <!-- Hero Section - Theme Enhanced -->

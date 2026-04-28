@@ -19,7 +19,7 @@ class AdminProductController extends Controller
         $products = Product::with(['category', 'stockType', 'images'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        
+
         return view('admin.products.index', compact('products'));
     }
 
@@ -27,7 +27,7 @@ class AdminProductController extends Controller
     {
         $categories = Category::all();
         $stockTypes = StockType::with('activeOptions')->get();
-        
+
         return view('admin.products.create', compact('categories', 'stockTypes'));
     }
 
@@ -72,7 +72,7 @@ class AdminProductController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $index => $image) {
                     $path = $image->store('products', 'public');
-                    
+
                     ProductImage::create([
                         'product_id' => $product->id,
                         'image_path' => $path,
@@ -90,7 +90,7 @@ class AdminProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return back()
                 ->withInput()
                 ->withErrors(['error' => 'Failed to create product: ' . $e->getMessage()]);
@@ -100,7 +100,7 @@ class AdminProductController extends Controller
     public function show(Product $product)
     {
         $product->load(['category', 'stockType', 'images', 'stock.stockTypeOption']);
-        
+
         return view('admin.products.show', compact('product'));
     }
 
@@ -108,7 +108,7 @@ class AdminProductController extends Controller
     {
         $categories = Category::all();
         $stockTypes = StockType::with('activeOptions')->get();
-        
+
         return view('admin.products.edit', compact('product', 'categories', 'stockTypes'));
     }
 
@@ -161,7 +161,7 @@ class AdminProductController extends Controller
                     $image = ProductImage::where('id', $imageId)
                         ->where('product_id', $product->id)
                         ->first();
-                    
+
                     if ($image) {
                         if (Storage::disk('public')->exists($image->image_path)) {
                             Storage::disk('public')->delete($image->image_path);
@@ -169,7 +169,7 @@ class AdminProductController extends Controller
                         $image->delete();
                     }
                 }
-                
+
                 // Set new primary if needed
                 if (!$product->images()->where('is_primary', true)->exists()) {
                     $firstImage = $product->images()->first();
@@ -183,18 +183,18 @@ class AdminProductController extends Controller
             if ($request->hasFile('images')) {
                 $existingImagesCount = $product->images()->count();
                 $sortOrder = $product->images()->max('sort_order') ?? 0;
-                
+
                 foreach ($request->file('images') as $index => $image) {
                     $path = $image->store('products', 'public');
                     $isPrimary = ($existingImagesCount === 0 && $index === 0);
-                    
+
                     ProductImage::create([
                         'product_id' => $product->id,
                         'image_path' => $path,
                         'sort_order' => ++$sortOrder,
                         'is_primary' => $isPrimary,
                     ]);
-                    
+
                     $existingImagesCount++;
                 }
             }
@@ -207,7 +207,7 @@ class AdminProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return back()
                 ->withInput()
                 ->withErrors(['error' => 'Failed to update product: ' . $e->getMessage()]);
@@ -246,9 +246,57 @@ class AdminProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return back()
                 ->withErrors(['error' => 'Failed to delete product: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Delete multiple products
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $ids = json_decode($request->input('product_ids', '[]'), true);
+
+        if (!is_array($ids)) {
+            $ids = [];
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $products = Product::whereIn('id', $ids)->get();
+
+            foreach ($products as $product) {
+                // Delete all product images
+                foreach ($product->images as $image) {
+                    if (Storage::disk('public')->exists($image->image_path)) {
+                        Storage::disk('public')->delete($image->image_path);
+                    }
+                    $image->delete();
+                }
+
+                // Delete legacy image if exists
+                if ($product->image && Storage::disk('public')->exists($product->image)) {
+                    Storage::disk('public')->delete($product->image);
+                }
+
+                // Delete product stock records
+                $product->stock()->delete();
+
+                // Delete the product
+                $product->delete();
+            }
+
+            DB::commit();
+
+            return back()->with('success', count($ids) . ' product(s) deleted successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->withErrors(['error' => 'Failed to delete products: ' . $e->getMessage()]);
         }
     }
 }

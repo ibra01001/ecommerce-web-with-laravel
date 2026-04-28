@@ -46,6 +46,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('users', AdminUserController::class);
 
     // Products
+    Route::delete('/products/destroy-multiple', [App\Http\Controllers\Admin\AdminProductController::class, 'destroyMultiple'])->name('products.destroy-multiple');
     Route::resource('products', App\Http\Controllers\Admin\AdminProductController::class);
 
     // Categories
